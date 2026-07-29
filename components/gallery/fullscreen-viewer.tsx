@@ -87,8 +87,8 @@ export function FullscreenViewer({ imageUrls, initialIndex, onClose }: Fullscree
         <img
           src={imageUrls[index]}
           alt=""
-          className="max-h-full max-w-full select-none object-contain transition-transform duration-[250ms] ease-out"
-          style={{ transform: `scale(${zoom})` }}
+          className="max-h-full max-w-full select-none object-contain transition-transform ease-out"
+          style={{ transform: `scale(${zoom})`, transitionDuration: '250ms' }}
           onDoubleClick={() => setZoom((z) => (z === 1 ? 2 : 1))}
           draggable={false}
         />
