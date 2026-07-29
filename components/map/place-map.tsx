@@ -2,6 +2,7 @@
 
 import { useCallback, useMemo, useState } from 'react';
 import MapGL, {
+  AttributionControl,
   GeolocateControl,
   Layer,
   Marker,
@@ -115,10 +116,11 @@ export function PlaceMap({ onMapClickEmpty, className }: PlaceMapProps) {
         style={{ width: '100%', height: '100%' }}
         interactiveLayerIds={['clusters', 'unclustered-point']}
         onClick={handleClick}
-        attributionControl={{ compact: true }}
+        attributionControl={false}
       >
         <NavigationControl position="bottom-right" showCompass={false} />
         <GeolocateControl position="bottom-right" trackUserLocation />
+        <AttributionControl position="bottom-left" compact />
 
         <Source
           id="places"
