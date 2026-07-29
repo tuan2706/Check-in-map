@@ -1,0 +1,53 @@
+import { z } from 'zod';
+
+export const placeFormSchema = z.object({
+  name: z.string().min(2, 'Tên địa điểm cần ít nhất 2 ký tự').max(120),
+  categoryId: z.string().min(1, 'Chọn một danh mục'),
+  address: z.string().max(200).optional().or(z.literal('')),
+  lat: z.number({ invalid_type_error: 'Cần có toạ độ GPS' }).min(-90).max(90),
+  lng: z.number({ invalid_type_error: 'Cần có toạ độ GPS' }).min(-180).max(180),
+  checkinDate: z.string().min(1, 'Chọn ngày check-in'),
+  checkinTime: z.string().optional().or(z.literal('')),
+  rating: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4), z.literal(5)]),
+  reviewText: z.string().max(2000).optional().or(z.literal('')),
+  recommendedDish: z.string().max(200).optional().or(z.literal('')),
+  priceRange: z.string().max(60).optional().or(z.literal('')),
+  weather: z.string().max(60).optional().or(z.literal('')),
+  wouldReturn: z.boolean(),
+  wouldRecommend: z.boolean(),
+  googleMapsUrl: z.string().url('Link không hợp lệ').optional().or(z.literal('')),
+  website: z.string().url('Link không hợp lệ').optional().or(z.literal('')),
+  facebook: z.string().url('Link không hợp lệ').optional().or(z.literal('')),
+  instagram: z.string().url('Link không hợp lệ').optional().or(z.literal('')),
+  companions: z.string().max(200).optional().or(z.literal('')),
+  cost: z.number().min(0).optional(),
+  notes: z.string().max(2000).optional().or(z.literal('')),
+  tagNames: z.array(z.string()).default([]),
+});
+
+export type PlaceFormValues = z.infer<typeof placeFormSchema>;
+
+export const PLACE_FORM_DEFAULTS: PlaceFormValues = {
+  name: '',
+  categoryId: '',
+  address: '',
+  lat: 0,
+  lng: 0,
+  checkinDate: new Date().toISOString().slice(0, 10),
+  checkinTime: new Date().toTimeString().slice(0, 5),
+  rating: 5,
+  reviewText: '',
+  recommendedDish: '',
+  priceRange: '',
+  weather: '',
+  wouldReturn: true,
+  wouldRecommend: true,
+  googleMapsUrl: '',
+  website: '',
+  facebook: '',
+  instagram: '',
+  companions: '',
+  cost: undefined,
+  notes: '',
+  tagNames: [],
+};

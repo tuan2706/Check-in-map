@@ -1,0 +1,150 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Light mode — "sổ nhật ký du lịch": nền trắng ngà trung tính, không kem ấm */
+    --background: 60 9% 97%;
+    --foreground: 228 24% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 228 24% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 228 24% 10%;
+
+    /* Primary = "Trail" cam san hô, dùng cho FAB/CTA/active state */
+    --primary: 12 100% 65%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Secondary = "Ocean" xanh ngọc đậm, dùng cho link/nút phụ */
+    --secondary: 180 68% 25%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 60 6% 93%;
+    --muted-foreground: 228 8% 42%;
+    --accent: 60 6% 93%;
+    --accent-foreground: 228 24% 10%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 228 10% 88%;
+    --input: 228 10% 88%;
+    --ring: 12 100% 65%;
+    --radius: 1.25rem;
+
+    /* Font tokens — Geist Sans cho toàn bộ UI/typography, Geist Mono cho dữ liệu số */
+    --font-sans: var(--font-geist-sans);
+    --font-mono: var(--font-geist-mono);
+  }
+
+  .dark {
+    --background: 228 20% 7%;
+    --foreground: 60 9% 96%;
+    --card: 228 16% 10%;
+    --card-foreground: 60 9% 96%;
+    --popover: 228 16% 10%;
+    --popover-foreground: 60 9% 96%;
+
+    --primary: 12 100% 68%;
+    --primary-foreground: 228 24% 8%;
+
+    --secondary: 180 55% 40%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 228 12% 15%;
+    --muted-foreground: 228 8% 65%;
+    --accent: 228 12% 15%;
+    --accent-foreground: 60 9% 96%;
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 228 12% 18%;
+    --input: 228 12% 18%;
+    --ring: 12 100% 68%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-sans text-body;
+  }
+}
+
+/* ============================================================
+   TYPOGRAPHY SYSTEM (V2.5) — Geist Sans, chỉ dùng weight 400/500/600.
+   line-height và letter-spacing được tinh chỉnh riêng cho từng cấp độ
+   để tạo cảm giác cao cấp, không dùng chữ quá đậm (700+).
+   ============================================================ */
+@layer components {
+  .text-display {
+    @apply font-sans text-[2rem] font-semibold leading-[1.15] tracking-[-0.02em];
+  }
+  .text-h1 {
+    @apply font-sans text-[1.75rem] font-semibold leading-[1.25] tracking-[-0.017em];
+  }
+  .text-h2 {
+    @apply font-sans text-[1.375rem] font-semibold leading-[1.3] tracking-[-0.014em];
+  }
+  .text-h3 {
+    @apply font-sans text-[1.125rem] font-medium leading-[1.35] tracking-[-0.01em];
+  }
+  .text-h4 {
+    @apply font-sans text-[1rem] font-medium leading-[1.4] tracking-[-0.006em];
+  }
+  .text-body-lg {
+    @apply font-sans text-[1rem] font-normal leading-[1.65] tracking-[-0.003em];
+  }
+  .text-body {
+    @apply font-sans text-[0.875rem] font-normal leading-[1.6] tracking-[-0.002em];
+  }
+  .text-caption {
+    @apply font-sans text-[0.75rem] font-normal leading-[1.5] tracking-[0];
+  }
+  .text-label {
+    @apply font-sans text-[0.75rem] font-medium uppercase leading-[1.4] tracking-[0.04em];
+  }
+}
+
+/* Chừa khoảng trống cho vùng home-indicator trên iPhone khi hiển thị Bottom Nav */
+.pb-safe {
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+}
+
+/* Hiệu ứng ping khi 1 marker được chọn trên bản đồ (V2.7 micro-interaction) */
+@keyframes marker-ping {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+.marker-ping {
+  animation: marker-ping 1s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+
+/* MapLibre GL cần chiều cao rõ ràng cho container */
+.maplibregl-map {
+  width: 100%;
+  height: 100%;
+}
+
+/* Chế độ bản đồ tối: đảo màu + xoay hue trên nền style sáng "liberty".
+   Đây là giải pháp thực dụng vì OpenFreeMap chưa có vector style tối riêng. */
+.map-dark-filter .maplibregl-canvas {
+  filter: invert(1) hue-rotate(180deg) brightness(0.95) contrast(0.9);
+}
+/* Marker/popup không nên bị đảo màu theo, chỉ nền bản đồ mới bị ảnh hưởng */
+.map-dark-filter .maplibregl-marker,
+.map-dark-filter .maplibregl-popup {
+  filter: invert(1) hue-rotate(180deg);
+}
+
+/* Ẩn attribution mặc định xấu, ta sẽ custom lại gọn hơn ở Phase 4 */
+.maplibregl-ctrl-attrib {
+  font-size: 10px;
+}
