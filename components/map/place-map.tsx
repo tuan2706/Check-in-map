@@ -72,7 +72,8 @@ export function PlaceMap({ onMapClickEmpty, className }: PlaceMapProps) {
       if (feature?.layer?.id === 'clusters') {
         const clusterId = feature.properties?.cluster_id;
         const source = mapRef?.getMap().getSource('places') as GeoJSONSource | undefined;
-        const coordinates = (feature.geometry as { coordinates: [number, number] }).coordinates;
+        const coordinates = (feature.geometry as unknown as { coordinates: [number, number] })
+          .coordinates;
         if (source && clusterId !== undefined) {
           source.getClusterExpansionZoom(clusterId, (err, zoom) => {
             if (err || !mapRef) return;
@@ -84,7 +85,8 @@ export function PlaceMap({ onMapClickEmpty, className }: PlaceMapProps) {
 
       if (feature?.layer?.id === 'unclustered-point') {
         const props = feature.properties as unknown as PlaceFeatureProps;
-        const [lng, lat] = (feature.geometry as { coordinates: [number, number] }).coordinates;
+        const [lng, lat] = (feature.geometry as unknown as { coordinates: [number, number] })
+          .coordinates;
         setSelectedWishlist(null);
         setSelected({ ...props, lng, lat });
         return;
