@@ -75,10 +75,15 @@ export function PlaceMap({ onMapClickEmpty, className }: PlaceMapProps) {
         const coordinates = (feature.geometry as unknown as { coordinates: [number, number] })
           .coordinates;
         if (source && clusterId !== undefined) {
-          source.getClusterExpansionZoom(clusterId, (err, zoom) => {
-            if (err || !mapRef) return;
-            mapRef.easeTo({ center: coordinates, zoom, duration: 400 });
-          });
+          source
+            .getClusterExpansionZoom(clusterId)
+            .then((zoom) => {
+              if (!mapRef) return;
+              mapRef.easeTo({ center: coordinates, zoom, duration: 400 });
+            })
+            .catch(() => {
+              // Bỏ qua nếu không lấy được zoom (vd cluster vừa biến mất do dữ liệu đổi)
+            });
         }
         return;
       }
