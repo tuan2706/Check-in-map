@@ -58,6 +58,7 @@ export default function PlaceDetailPage({ params }: { params: { id: string } }) 
   }
 
   async function handleDelete() {
+    if (!place) return;
     setConfirmingDelete(false);
     router.push('/places');
 
