@@ -1,10 +1,10 @@
 import { useMemo } from 'react';
 import { haversineDistanceKm } from '@/lib/utils/geo';
-import type { CategoryId, WishlistPlaceWithMeta } from '@/types';
+import type { CategoryId, WishlistPlaceWithMeta, WishlistPriority } from '@/types';
 
 export type WishlistSortOption = 'added_desc' | 'priority' | 'distance';
 
-const PRIORITY_ORDER: Record<string, number> = { high: 0, medium: 1, low: 2 };
+const PRIORITY_ORDER: Record<WishlistPriority, number> = { high: 0, medium: 1, low: 2 };
 
 export function useFilteredWishlist(
   items: WishlistPlaceWithMeta[] | undefined,

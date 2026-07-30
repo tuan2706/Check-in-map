@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
 import { haversineDistanceKm } from '@/lib/utils/geo';
-import type { WishlistPlaceWithMeta } from '@/types';
+import type { WishlistPlaceWithMeta, WishlistPriority } from '@/types';
 
-const PRIORITY_SCORE: Record<string, number> = { high: 40, medium: 20, low: 5 };
+const PRIORITY_SCORE: Record<WishlistPriority, number> = { high: 40, medium: 20, low: 5 };
 
 /**
  * Gợi ý dựa hoàn toàn trên dữ liệu người dùng tự có (không gọi API rating ngoài,
@@ -43,7 +43,8 @@ export function useWeekendSuggestions(
     while (result.length < limit && remaining.length > 0) {
       let pickIndex = remaining.findIndex((s) => !usedCategories.has(s.item.categoryId));
       if (pickIndex === -1) pickIndex = 0;
-      const [picked] = remaining.splice(pickIndex, 1);
+      const picked = remaining.splice(pickIndex, 1)[0];
+      if (!picked) break;
       result.push(picked.item);
       usedCategories.add(picked.item.categoryId);
     }
