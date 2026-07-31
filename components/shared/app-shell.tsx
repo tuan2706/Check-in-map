@@ -1,5 +1,6 @@
 import { BottomNav } from '@/components/shared/bottom-nav';
 import { Sidebar } from '@/components/shared/sidebar';
+import { MascotWidget } from '@/components/mascot/mascot-widget';
 
 /**
  * Khung layout dùng chung cho toàn bộ 6 trang chính.
@@ -12,6 +13,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <Sidebar />
       <div className="pb-[72px] lg:pb-0 lg:pl-60">{children}</div>
       <BottomNav />
+      <MascotWidget />
     </div>
   );
 }

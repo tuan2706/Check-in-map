@@ -126,6 +126,70 @@
   animation: marker-ping 1s cubic-bezier(0, 0, 0.2, 1) infinite;
 }
 
+/* Confetti rơi khi ra kết quả random ("Hôm nay đi đâu?") */
+@keyframes confetti-fall {
+  0% {
+    transform: translateY(-10px) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh) rotate(360deg);
+    opacity: 0;
+  }
+}
+.confetti-piece {
+  animation: confetti-fall linear forwards;
+}
+
+/* Hiệu ứng "quay số" khi đang random — card cuộn nhanh rồi chậm dần */
+@keyframes spin-cycle {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(0.96);
+  }
+}
+.spin-cycling {
+  animation: spin-cycle 0.35s ease-in-out infinite;
+}
+
+/* Bottom sheet thông tin marker trên mobile (Google Maps-style card nổi từ dưới) */
+@keyframes map-sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+.map-bottom-sheet {
+  animation: map-sheet-up 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Marker wishlist nảy nhẹ khi được chọn */
+@keyframes marker-bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(-10px);
+  }
+  50% {
+    transform: translateY(0);
+  }
+  70% {
+    transform: translateY(-4px);
+  }
+}
+.marker-bounce {
+  animation: marker-bounce 0.5s ease-out;
+}
+
 
 /* MapLibre GL cần chiều cao rõ ràng cho container */
 .maplibregl-map {

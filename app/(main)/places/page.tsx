@@ -23,10 +23,14 @@ import { deleteWishlistItem } from '@/lib/db/repositories/wishlist-repo';
 import {
   countActiveFilters,
   DEFAULT_FILTERS,
+  DEFAULT_NEAR_ME_RADIUS_KM,
+  NEAR_ME_RADIUS_OPTIONS,
   useFilteredPlaces,
   type SortOption,
 } from '@/lib/hooks/use-filtered-places';
 import { useFilteredWishlist, type WishlistSortOption } from '@/lib/hooks/use-filtered-wishlist';
+import { usePassingBy } from '@/lib/hooks/use-passing-by';
+import { PassingByBanner } from '@/components/passing-by/passing-by-banner';
 import { cn } from '@/lib/utils/cn';
 import type { CategoryId, WishlistPlaceWithMeta } from '@/types';
 
@@ -35,6 +39,8 @@ const SORT_OPTIONS: { value: SortOption; label: string }[] = [
   { value: 'oldest', label: 'Cũ nhất' },
   { value: 'rating_desc', label: 'Rating cao nhất' },
   { value: 'name_asc', label: 'Tên A-Z' },
+  { value: 'distance_asc', label: 'Gần nhất' },
+  { value: 'stale_first', label: 'Đã lâu chưa ghé' },
 ];
 
 const WISHLIST_SORT_OPTIONS: { value: WishlistSortOption; label: string }[] = [
@@ -55,6 +61,8 @@ export default function PlacesPage() {
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
   const [sort, setSort] = useState<SortOption>('newest');
   const [worthReturningOnly, setWorthReturningOnly] = useState(false);
+  const [nearMeActive, setNearMeActive] = useState(false);
+  const [nearMeRadiusKm, setNearMeRadiusKm] = useState(DEFAULT_NEAR_ME_RADIUS_KM);
 
   // --- Wishlist ---
   const [wishlistSheetOpen, setWishlistSheetOpen] = useState(false);
@@ -66,14 +74,25 @@ export default function PlacesPage() {
   const wishlist = useWishlist();
   const categories = useCategories();
   const currentLocation = useCurrentLocation();
+  const passingBy = usePassingBy();
 
   const categoryById = useMemo(() => new Map(categories?.map((c) => [c.id, c])), [categories]);
 
-  const effectiveFilters = worthReturningOnly
-    ? { ...filters, minRating: Math.max(filters.minRating, 4), wouldReturnOnly: true, wouldRecommendOnly: true }
-    : filters;
+  const effectiveFilters = {
+    ...filters,
+    ...(worthReturningOnly
+      ? { minRating: Math.max(filters.minRating, 4), wouldReturnOnly: true, wouldRecommendOnly: true }
+      : {}),
+    nearMeRadiusKm: nearMeActive ? nearMeRadiusKm : null,
+  };
 
-  const filteredPlaces = useFilteredPlaces(places, tab === 'visited' ? query : '', effectiveFilters, sort);
+  const filteredPlaces = useFilteredPlaces(
+    places,
+    tab === 'visited' ? query : '',
+    effectiveFilters,
+    sort,
+    currentLocation
+  );
   const { visibleItems, sentinelRef, hasMore } = usePagedList(filteredPlaces, 30);
   const activeFilterCount = countActiveFilters(filters);
 
@@ -96,6 +115,10 @@ export default function PlacesPage() {
         }
       />
 
+      {passingBy.result && (
+        <PassingByBanner data={passingBy.result} onDismiss={passingBy.dismiss} onHideToday={passingBy.hideForToday} />
+      )}
+
       <SegmentedTabs
         value={tab}
         onChange={setTab}
@@ -116,6 +139,18 @@ export default function PlacesPage() {
       {tab === 'visited' ? (
         <>
           <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setNearMeActive((v) => !v)}
+              className={cn(
+                'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors',
+                nearMeActive
+                  ? 'border-transparent bg-secondary text-secondary-foreground'
+                  : 'border-border bg-card hover:bg-accent'
+              )}
+            >
+              📍 Gần tôi
+            </button>
             <button
               type="button"
               onClick={() => setWorthReturningOnly((v) => !v)}
@@ -145,6 +180,26 @@ export default function PlacesPage() {
               ))}
             </div>
           </div>
+
+          {nearMeActive && (
+            <div className="flex flex-wrap gap-1.5">
+              {NEAR_ME_RADIUS_OPTIONS.map((r) => (
+                <button
+                  key={r}
+                  type="button"
+                  onClick={() => setNearMeRadiusKm(r)}
+                  className={cn(
+                    'rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
+                    nearMeRadiusKm === r
+                      ? 'border-secondary bg-secondary/10 text-secondary'
+                      : 'border-border bg-card hover:bg-accent'
+                  )}
+                >
+                  {r < 1 ? `${r * 1000}m` : `${r}km`}
+                </button>
+              ))}
+            </div>
+          )}
 
           {places === undefined ? (
             <PlaceListSkeleton />

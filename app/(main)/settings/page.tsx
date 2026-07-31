@@ -2,15 +2,24 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { Check, Database, Download, Moon, Sun, Tags, Upload } from 'lucide-react';
+import { Check, Database, Download, MapPinned, Moon, Smile, Sun, Tags, Upload } from 'lucide-react';
 import { PageHeader } from '@/components/shared/page-header';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
 import { db } from '@/lib/db/schema';
 import { setAppTheme } from '@/components/shared/theme-provider';
+import { updateSettings } from '@/lib/db/repositories/settings-repo';
 import { downloadBackup, exportAllData, importAllData } from '@/lib/db/backup';
 import { useToast } from '@/lib/hooks/use-toast';
 import { useCategories } from '@/lib/hooks/use-categories';
 import { usePlaces } from '@/lib/hooks/use-places';
+
+const PASSING_BY_RADIUS_OPTIONS = [300, 500, 1000, 2000];
+const MASCOT_FREQUENCY_OPTIONS: { value: 'low' | 'medium' | 'high'; label: string }[] = [
+  { value: 'low', label: 'Ít' },
+  { value: 'medium', label: 'Vừa' },
+  { value: 'high', label: 'Nhiều' },
+];
 
 const THEME_OPTIONS = [
   { value: 'light' as const, label: 'Sáng', icon: Sun },
@@ -148,6 +157,113 @@ export default function SettingsPage() {
             ⚠️ Import sẽ <strong>thay thế toàn bộ</strong> dữ liệu hiện tại bằng dữ liệu trong file. Nên
             Export trước khi Import để tránh mất dữ liệu.
           </p>
+        </div>
+      </section>
+
+      {/* Đi ngang qua */}
+      <section className="space-y-2.5">
+        <h2 className="text-sm font-semibold text-muted-foreground">Đi ngang qua</h2>
+        <div className="space-y-3 rounded-2xl border border-border bg-card p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-sm">
+              <MapPinned className="h-4 w-4 text-muted-foreground" />
+              Nhắc khi ở gần địa điểm đã lưu
+            </div>
+            <Switch
+              checked={settings?.passingByEnabled ?? false}
+              onCheckedChange={(v) => updateSettings({ passingByEnabled: v })}
+            />
+          </div>
+
+          {settings?.passingByEnabled && (
+            <>
+              <div className="space-y-1.5">
+                <p className="text-xs text-muted-foreground">Bán kính gợi ý</p>
+                <div className="flex gap-2">
+                  {PASSING_BY_RADIUS_OPTIONS.map((r) => (
+                    <button
+                      key={r}
+                      onClick={() => updateSettings({ passingByRadiusM: r })}
+                      className={`flex-1 rounded-xl border py-2 text-xs font-medium transition-colors ${
+                        (settings?.passingByRadiusM ?? 500) === r
+                          ? 'border-primary bg-primary/10 text-primary'
+                          : 'border-border bg-background hover:bg-accent'
+                      }`}
+                    >
+                      {r < 1000 ? `${r}m` : `${r / 1000}km`}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <p className="text-xs text-muted-foreground">Số lần hiển thị mỗi ngày</p>
+                <div className="flex gap-2">
+                  {[3, 5, 10].map((n) => (
+                    <button
+                      key={n}
+                      onClick={() => updateSettings({ passingByDailyLimit: n })}
+                      className={`flex-1 rounded-xl border py-2 text-xs font-medium transition-colors ${
+                        (settings?.passingByDailyLimit ?? 5) === n
+                          ? 'border-primary bg-primary/10 text-primary'
+                          : 'border-border bg-background hover:bg-accent'
+                      }`}
+                    >
+                      {n} lần
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full"
+                onClick={() => {
+                  const endOfDay = new Date();
+                  endOfDay.setHours(23, 59, 59, 999);
+                  updateSettings({ passingByHiddenUntil: endOfDay.getTime() });
+                  toast({ title: 'Đã tạm ẩn đến hết hôm nay' });
+                }}
+              >
+                Tạm ẩn gợi ý hôm nay
+              </Button>
+            </>
+          )}
+        </div>
+      </section>
+
+      {/* Mascot */}
+      <section className="space-y-2.5">
+        <h2 className="text-sm font-semibold text-muted-foreground">Mascot đồng hành</h2>
+        <div className="space-y-3 rounded-2xl border border-border bg-card p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-sm">
+              <Smile className="h-4 w-4 text-muted-foreground" />
+              Hiện mascot nhắc nhở
+            </div>
+            <Switch
+              checked={settings?.mascotEnabled ?? true}
+              onCheckedChange={(v) => updateSettings({ mascotEnabled: v })}
+            />
+          </div>
+          {(settings?.mascotEnabled ?? true) && (
+            <div className="flex gap-2">
+              {MASCOT_FREQUENCY_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => updateSettings({ mascotFrequency: opt.value })}
+                  className={`flex-1 rounded-xl border py-2 text-xs font-medium transition-colors ${
+                    (settings?.mascotFrequency ?? 'medium') === opt.value
+                      ? 'border-primary bg-primary/10 text-primary'
+                      : 'border-border bg-background hover:bg-accent'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 

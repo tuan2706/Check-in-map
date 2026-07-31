@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Controller, useForm } from 'react-hook-form';
 import { Locate, Loader2 } from 'lucide-react';
@@ -12,6 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { CategoryPicker } from '@/components/checkin/category-picker';
 import { StarRatingInput } from '@/components/checkin/star-rating-input';
 import { TagInput } from '@/components/checkin/tag-input';
+import { AddressSearchInput } from '@/components/checkin/address-search-input';
 import { ImageDropzone } from '@/components/gallery/image-dropzone';
 import { PendingPhotoGrid } from '@/components/gallery/pending-photo-grid';
 import { useCategories } from '@/lib/hooks/use-categories';
@@ -22,16 +24,37 @@ import {
 } from '@/lib/validation/place-schema';
 import type { CategoryId } from '@/types';
 
+// MapLibre cần DOM/window -> tắt SSR cho bản đồ nhỏ nhúng trong form
+const LocationPickerMap = dynamic(
+  () => import('@/components/checkin/location-picker-map').then((m) => m.LocationPickerMap),
+  { ssr: false, loading: () => <div className="h-52 w-full animate-pulse rounded-xl bg-muted" /> }
+);
+
 interface CheckinFormProps {
   initialLatLng?: { lat: number; lng: number };
+  /** Điền sẵn dữ liệu cũ khi Edit — không cần thì để trống (mặc định là Check-in mới) */
+  defaultValues?: Partial<PlaceFormValues>;
+  /** Ẩn phần upload ảnh khi Edit, vì ảnh đã quản lý riêng ở trang chi tiết địa điểm */
+  hideImageSection?: boolean;
+  submitLabel?: string;
   onSubmit: (values: PlaceFormValues, pendingImages: File[]) => Promise<void> | void;
   onCancel: () => void;
   isSubmitting?: boolean;
 }
 
-export function CheckinForm({ initialLatLng, onSubmit, onCancel, isSubmitting }: CheckinFormProps) {
+export function CheckinForm({
+  initialLatLng,
+  defaultValues,
+  hideImageSection = false,
+  submitLabel = 'Lưu check-in',
+  onSubmit,
+  onCancel,
+  isSubmitting,
+}: CheckinFormProps) {
   const categories = useCategories();
   const [pendingImages, setPendingImages] = useState<File[]>([]);
+  const [flyToTick, setFlyToTick] = useState(0);
+  const [addressQuery, setAddressQuery] = useState(defaultValues?.address ?? '');
 
   const {
     register,
@@ -44,8 +67,9 @@ export function CheckinForm({ initialLatLng, onSubmit, onCancel, isSubmitting }:
     resolver: zodResolver(placeFormSchema),
     defaultValues: {
       ...PLACE_FORM_DEFAULTS,
-      lat: initialLatLng?.lat ?? 0,
-      lng: initialLatLng?.lng ?? 0,
+      ...defaultValues,
+      lat: defaultValues?.lat ?? initialLatLng?.lat ?? 0,
+      lng: defaultValues?.lng ?? initialLatLng?.lng ?? 0,
     },
   });
 
@@ -53,8 +77,10 @@ export function CheckinForm({ initialLatLng, onSubmit, onCancel, isSubmitting }:
     if (initialLatLng) {
       setValue('lat', initialLatLng.lat);
       setValue('lng', initialLatLng.lng);
+      setFlyToTick((t) => t + 1);
     }
-  }, [initialLatLng, setValue]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialLatLng]);
 
   const lat = watch('lat');
   const lng = watch('lng');
@@ -65,6 +91,7 @@ export function CheckinForm({ initialLatLng, onSubmit, onCancel, isSubmitting }:
     navigator.geolocation.getCurrentPosition((pos) => {
       setValue('lat', pos.coords.latitude);
       setValue('lng', pos.coords.longitude);
+      setFlyToTick((t) => t + 1);
     });
   }
 
@@ -96,30 +123,56 @@ export function CheckinForm({ initialLatLng, onSubmit, onCancel, isSubmitting }:
         {errors.categoryId && <p className="text-xs text-destructive">{errors.categoryId.message}</p>}
       </div>
 
-      {/* Địa chỉ + GPS */}
+      {/* Địa chỉ — gõ để tự tìm toạ độ (Nominatim), chọn kết quả sẽ tự điền GPS + bay bản đồ tới */}
       <div className="space-y-2">
         <Label htmlFor="address">Địa chỉ</Label>
-        <Input id="address" placeholder="Số nhà, đường, quận..." {...register('address')} />
+        <Controller
+          control={control}
+          name="address"
+          render={({ field }) => (
+            <AddressSearchInput
+              value={addressQuery}
+              onChangeText={(text) => {
+                setAddressQuery(text);
+                field.onChange(text);
+              }}
+              onSelectResult={(result) => {
+                setAddressQuery(result.displayName);
+                field.onChange(result.displayName);
+                setValue('lat', result.lat);
+                setValue('lng', result.lng);
+                setFlyToTick((t) => t + 1);
+              }}
+            />
+          )}
+        />
       </div>
 
-      <div className="flex items-center justify-between rounded-xl border border-border bg-card px-3.5 py-2.5">
-        <div className="font-mono text-xs text-muted-foreground">
-          {hasGps ? (
-            <span>
-              📍 {lat.toFixed(5)}, {lng.toFixed(5)}
-            </span>
-          ) : (
-            <span>Chưa có toạ độ GPS</span>
-          )}
+      {/* Bản đồ nhỏ + kéo marker chỉnh vị trí */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <Label>Vị trí trên bản đồ</Label>
+          <Button type="button" variant="outline" size="sm" onClick={useMyLocation}>
+            <Locate className="mr-1.5 h-3.5 w-3.5" />
+            Vị trí hiện tại
+          </Button>
         </div>
-        <Button type="button" variant="outline" size="sm" onClick={useMyLocation}>
-          <Locate className="mr-1.5 h-3.5 w-3.5" />
-          Vị trí hiện tại
-        </Button>
+        <LocationPickerMap
+          lat={lat}
+          lng={lng}
+          flyToTick={flyToTick}
+          onChange={(newLat, newLng) => {
+            setValue('lat', newLat);
+            setValue('lng', newLng);
+          }}
+        />
+        <p className="font-mono text-xs text-muted-foreground">
+          {hasGps ? `📍 ${lat.toFixed(5)}, ${lng.toFixed(5)} — kéo marker để chỉnh lại` : 'Chưa có toạ độ GPS'}
+        </p>
+        {(errors.lat || errors.lng) && (
+          <p className="text-xs text-destructive">Cần có toạ độ GPS hợp lệ</p>
+        )}
       </div>
-      {(errors.lat || errors.lng) && (
-        <p className="-mt-4 text-xs text-destructive">Cần có toạ độ GPS hợp lệ</p>
-      )}
 
       {/* Ngày giờ */}
       <div className="grid grid-cols-2 gap-3">
@@ -225,15 +278,17 @@ export function CheckinForm({ initialLatLng, onSubmit, onCancel, isSubmitting }:
         <Textarea id="notes" {...register('notes')} />
       </div>
 
-      {/* Ảnh */}
-      <div className="space-y-3">
-        <Label>Hình ảnh</Label>
-        <ImageDropzone onFilesSelected={(files) => setPendingImages((prev) => [...prev, ...files])} />
-        <PendingPhotoGrid
-          files={pendingImages}
-          onRemove={(index) => setPendingImages((prev) => prev.filter((_, i) => i !== index))}
-        />
-      </div>
+      {/* Ảnh — ẩn khi Edit vì đã có mục quản lý ảnh riêng ở trang chi tiết */}
+      {!hideImageSection && (
+        <div className="space-y-3">
+          <Label>Hình ảnh</Label>
+          <ImageDropzone onFilesSelected={(files) => setPendingImages((prev) => [...prev, ...files])} />
+          <PendingPhotoGrid
+            files={pendingImages}
+            onRemove={(index) => setPendingImages((prev) => prev.filter((_, i) => i !== index))}
+          />
+        </div>
+      )}
 
       <div className="flex gap-3 pt-2">
         <Button type="button" variant="outline" className="flex-1" onClick={onCancel}>
@@ -241,7 +296,7 @@ export function CheckinForm({ initialLatLng, onSubmit, onCancel, isSubmitting }:
         </Button>
         <Button type="submit" className="flex-1" disabled={isSubmitting}>
           {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Lưu check-in
+          {submitLabel}
         </Button>
       </div>
     </form>

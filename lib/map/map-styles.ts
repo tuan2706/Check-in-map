@@ -25,7 +25,9 @@ const SATELLITE_STYLE: StyleSpecification = {
 };
 
 export const MAP_STYLES = {
-  light: 'https://tiles.openfreemap.org/styles/positron',
+  // "liberty" giàu chi tiết hơn "positron": có tên đường, icon POI, gần với trải nghiệm
+  // Google Maps hơn — đổi theo yêu cầu nâng cấp UX bản đồ ở Version 4.
+  light: 'https://tiles.openfreemap.org/styles/liberty',
   dark: 'https://tiles.openfreemap.org/styles/liberty',
   satellite: SATELLITE_STYLE,
 } as const;

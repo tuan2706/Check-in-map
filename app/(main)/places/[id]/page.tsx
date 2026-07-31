@@ -10,6 +10,7 @@ import {
   Heart,
   Instagram,
   Map as MapIcon,
+  Pencil,
   Trash2,
   Utensils,
   Wallet,
@@ -19,6 +20,7 @@ import { CategoryBadge } from '@/components/place/category-badge';
 import { PhotoGrid } from '@/components/gallery/photo-grid';
 import { ImageDropzone } from '@/components/gallery/image-dropzone';
 import { Button } from '@/components/ui/button';
+import { CheckinSheet } from '@/components/checkin/checkin-sheet';
 import { usePlace } from '@/lib/hooks/use-places';
 import { useImages } from '@/lib/hooks/use-images';
 import { useCategories } from '@/lib/hooks/use-categories';
@@ -36,6 +38,7 @@ export default function PlaceDetailPage({ params }: { params: { id: string } }) 
   const images = useImages(placeId);
   const categories = useCategories();
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [editSheetOpen, setEditSheetOpen] = useState(false);
 
   const category = useMemo(
     () => categories?.find((c) => c.id === place?.categoryId),
@@ -93,17 +96,26 @@ export default function PlaceDetailPage({ params }: { params: { id: string } }) 
         >
           <ArrowLeft className="h-4 w-4" /> Quay lại
         </button>
-        <button
-          onClick={() => toggleFavorite(placeId, place.isFavorite)}
-          className="rounded-full p-2 hover:bg-accent"
-          aria-label="Yêu thích"
-        >
-          <Heart
-            className="h-5 w-5"
-            fill={place.isFavorite ? '#ef4444' : 'none'}
-            color={place.isFavorite ? '#ef4444' : 'currentColor'}
-          />
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => setEditSheetOpen(true)}
+            className="rounded-full p-2 hover:bg-accent"
+            aria-label="Chỉnh sửa"
+          >
+            <Pencil className="h-5 w-5" />
+          </button>
+          <button
+            onClick={() => toggleFavorite(placeId, place.isFavorite)}
+            className="rounded-full p-2 hover:bg-accent"
+            aria-label="Yêu thích"
+          >
+            <Heart
+              className="h-5 w-5"
+              fill={place.isFavorite ? '#ef4444' : 'none'}
+              color={place.isFavorite ? '#ef4444' : 'currentColor'}
+            />
+          </button>
+        </div>
       </div>
 
       {/* Header */}
@@ -202,6 +214,8 @@ export default function PlaceDetailPage({ params }: { params: { id: string } }) 
           </div>
         )}
       </div>
+
+      <CheckinSheet open={editSheetOpen} onOpenChange={setEditSheetOpen} editingPlace={place} />
     </main>
   );
 }

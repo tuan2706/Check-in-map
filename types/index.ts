@@ -83,6 +83,20 @@ export interface AppSettings {
   theme: 'light' | 'dark' | 'system';
   mapStyle: 'streets' | 'satellite';
   lastBackupAt?: number;
+
+  // Version 4 — các field mới đều optional để không ảnh hưởng dữ liệu settings cũ
+  nearMeDefaultRadiusKm?: number;
+  homeWidgetRadiusKm?: number;
+
+  passingByEnabled?: boolean;
+  passingByRadiusM?: number;
+  passingByDailyLimit?: number;
+  passingByShownDate?: string; // yyyy-MM-dd — để reset đếm số lần hiển thị mỗi ngày
+  passingByShownCount?: number;
+  passingByHiddenUntil?: number; // timestamp — "tạm ẩn hôm nay"
+
+  mascotEnabled?: boolean;
+  mascotFrequency?: 'low' | 'medium' | 'high';
 }
 
 /** Kiểu dữ liệu Place kèm quan hệ đã join sẵn, dùng cho UI */
@@ -135,4 +149,47 @@ export interface WishlistImage {
 
 export interface WishlistPlaceWithMeta extends WishlistPlace {
   imageCount: number;
+}
+
+// ============================================================
+// RANDOM DISCOVERY ("Hôm nay đi đâu?") — Version 3
+// ============================================================
+
+export type RandomSource = 'wishlist' | 'visited' | 'not_visited' | 'all';
+
+export interface RandomFilters {
+  source: RandomSource;
+  categoryIds: CategoryId[];
+  maxDistanceKm: number | null; // null = không giới hạn
+  minBudget: number | null;
+  maxBudget: number | null;
+  priority: WishlistPriority | null; // chỉ áp dụng khi source liên quan Wishlist
+  minRating: number | null; // chỉ áp dụng khi source liên quan địa điểm đã ghé
+  wouldReturnOnly: boolean;
+}
+
+/** 1 mục có thể được random tới — gộp chung Place và WishlistPlace về 1 hình dạng thống nhất */
+export interface RandomCandidate {
+  kind: 'place' | 'wishlist';
+  id: number;
+  name: string;
+  categoryId: CategoryId;
+  address?: string;
+  lat?: number;
+  lng?: number;
+  coverImageId?: number;
+  rating?: Rating;
+  priority?: WishlistPriority;
+  cost?: number;
+  googleMapsUrl?: string;
+  addedOrCheckedInAt: number; // timestamp để tính "đã lưu từ X tháng trước"
+  wouldReturn?: boolean;
+  isFavorite?: boolean;
+}
+
+export interface SpinHistoryEntry {
+  id?: number;
+  candidateKind: 'place' | 'wishlist';
+  candidateId: number;
+  spunAt: number;
 }

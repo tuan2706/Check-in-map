@@ -101,7 +101,8 @@ export async function convertWishlistToCheckin(
   // Nếu wishlist chưa có ảnh bìa nhưng có ít nhất 1 ảnh, đặt ảnh đầu tiên làm bìa
   if (!wishlistItem.coverImageId && oldImages.length > 0) {
     const firstNew = await db.images.where('placeId').equals(newPlaceId).sortBy('order');
-    if (firstNew[0]) await db.places.update(newPlaceId, { coverImageId: firstNew[0].id });
+    const firstImage = firstNew[0];
+    if (firstImage) await db.places.update(newPlaceId, { coverImageId: firstImage.id });
   }
 
   await db.wishlistPlaces.update(wishlistId, {

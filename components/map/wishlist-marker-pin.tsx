@@ -1,11 +1,13 @@
 'use client';
 
 import { Star } from 'lucide-react';
+import { cn } from '@/lib/utils/cn';
 import { PRIORITY_COLORS } from '@/lib/validation/wishlist-schema';
 import type { WishlistPriority } from '@/types';
 
 interface WishlistMarkerPinProps {
   priority: WishlistPriority;
+  isSelected?: boolean;
   onClick?: () => void;
 }
 
@@ -15,14 +17,17 @@ interface WishlistMarkerPinProps {
  * bằng clustering, đổi lại có thể vẽ hình dạng tuỳ ý (sao/bookmark) dễ dàng hơn nhiều
  * so với circle layer của MapLibre (chỉ vẽ được hình tròn).
  */
-export function WishlistMarkerPin({ priority, onClick }: WishlistMarkerPinProps) {
+export function WishlistMarkerPin({ priority, isSelected, onClick }: WishlistMarkerPinProps) {
   const color = PRIORITY_COLORS[priority];
 
   return (
     <button
       type="button"
       onClick={onClick}
-      className="flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border-2 border-white shadow-md transition-transform hover:scale-110 active:scale-95"
+      className={cn(
+        'flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border-2 border-white shadow-md transition-transform hover:scale-110 active:scale-95',
+        isSelected && 'marker-bounce scale-125'
+      )}
       style={{ backgroundColor: color }}
       aria-label="Địa điểm Wishlist"
     >

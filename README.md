@@ -241,3 +241,57 @@ Export/Import (Cài đặt) đã được cập nhật để **bao gồm cả d�
 Đây là lần cập nhật lớn nhất từ trước đến giờ (7 phase, rất nhiều file mới). Khả năng có lỗi nhỏ cao hơn bình thường — dán nguyên văn lỗi Terminal cho tôi, tôi sẽ sửa ngay, không cần lo lắng.
 
 Bạn thử toàn bộ luồng Wishlist: thêm 1 nơi vào Wishlist → xem trên bản đồ (marker sao) → bấm "Đã trải nghiệm" → xác nhận nó chuyển sang tab Đã ghé đúng như mong đợi.
+
+---
+
+## VERSION 3 — 🎲 "Hôm nay đi đâu?" (Random Discovery)
+
+Không cần `npm install` gì thêm (không dùng thư viện ngoài nào — confetti và animation "quay số" đều tự viết bằng CSS/JS thuần).
+
+**Nút mới** ở giữa phía dưới trang Home (nổi bật nhất, nền đen) — bấm vào mở:
+
+1. **Bộ lọc:** nguồn dữ liệu (Tất cả/Chỉ Wishlist/Chỉ đã ghé/Chưa từng ghé), danh mục, khoảng cách, ngân sách, mức ưu tiên (Wishlist), rating tối thiểu + "chỉ nơi muốn quay lại" (đã ghé). Có hiện số lượng địa điểm khớp bộ lọc, và danh sách "Tuần này đã quay trúng" để biết mình từng quay gì.
+2. Bấm **"Quay số!"** → hiệu ứng cuộn nhanh tên các địa điểm ~1.8 giây (giống Spotify Shuffle)
+3. Ra **kết quả**: ảnh bìa, tên, rating/độ ưu tiên, lý do được gợi ý (vd "Bạn chưa từng đến đây", "Cách bạn chỉ 3km", "Đã lưu 4 tháng trước") + confetti nhẹ
+4. **4 nút hành động:** Đi ngay (mở Google Maps), Random lại, Lưu cuối tuần (tăng ưu tiên Wishlist / thêm Yêu thích), Đánh dấu đã đi (chỉ hiện với Wishlist — tái dùng đúng luồng "Đã trải nghiệm" đã có)
+
+**Cách random không phải ngẫu nhiên đều** — có trọng số ưu tiên: Wishlist > đã ghé, priority cao được ưu tiên hơn, gần vị trí hiện tại được ưu tiên hơn, và **giảm mạnh (không loại hẳn) xác suất** những nơi vừa quay trúng trong 7 ngày gần đây.
+
+**2 điểm tôi tự quyết định** (đã nói ở đầu, nhắc lại cho rõ):
+- Bỏ lọc theo Quận/Phường/Tỉnh (app không có dữ liệu địa chỉ có cấu trúc để lọc chính xác)
+- "Lưu cho cuối tuần" = tăng ưu tiên Wishlist lên "Rất muốn đi", hoặc thêm vào ❤️ Yêu thích nếu là nơi đã ghé
+
+Thử ngay: bấm nút 🎲 trên Home, thử vài bộ lọc khác nhau, quay vài lần xem thuật toán có ưu tiên đúng như mô tả không.
+
+---
+
+## VERSION 4 — Bản đồ nâng cao, Chỉnh sửa, Mascot, Gần tôi, Đi ngang qua, Khám phá quanh bạn
+
+**Không cần `npm install` thêm** — toàn bộ 7 tính năng dùng lại thư viện đã có sẵn.
+
+### 1. Chỉnh sửa địa điểm
+Vào chi tiết 1 địa điểm đã ghé → bấm icon ✏️ cạnh nút ❤️ → form hiện sẵn toàn bộ dữ liệu cũ, sửa gì tuỳ ý (trừ ảnh — ảnh vẫn quản lý ở mục Hình ảnh bên dưới như trước) → Lưu thay đổi. Bản đồ/Timeline/thống kê tự cập nhật ngay.
+
+### 2. Tự động định vị khi nhập địa chỉ
+Trong form Check-in/Edit, gõ vào ô Địa chỉ (≥3 ký tự, đợi ~0.5s) → hiện danh sách kết quả từ OpenStreetMap → chọn 1 kết quả → bản đồ nhỏ ngay bên dưới tự bay tới, marker tự đặt đúng vị trí. **Vẫn có thể kéo marker tay** để chỉnh chính xác hơn (vd: quán nằm trong hẻm mà địa chỉ chỉ ra được đầu hẻm). ⚠️ Bước tìm kiếm này cần Internet — nếu mất mạng, chỉ cần bấm "Vị trí hiện tại" hoặc kéo marker tay như trước, không ảnh hưởng gì khác.
+
+### 3. Bản đồ nâng cấp
+Style bản đồ giờ hiển thị rõ tên đường + icon POI (đổi từ style tối giản sang style chi tiết). Bấm vào 1 địa điểm: marker phồng to + có viền dày hơn (mượt, có transition). Trên điện thoại, thông tin địa điểm hiện dạng **card trượt lên từ dưới** (giống Google Maps) thay vì popup nhỏ; trên máy tính vẫn dùng popup như cũ. Có thêm thước tỷ lệ (scale) và la bàn (compass, xoay được bản đồ bằng 2 ngón tay/kéo chuột phải).
+
+### 4. Bộ lọc "Gần tôi"
+Trong tab Đã ghé (trang Địa điểm): chip "📍 Gần tôi" + chọn bán kính 500m-20km + sắp xếp "Gần nhất"/"Đã lâu chưa ghé". Trên bản đồ chính cũng có nút "Gần tôi" riêng — bật lên sẽ vẽ **vòng tròn bán kính** quanh vị trí bạn, các marker ngoài vòng tròn tự mờ đi.
+
+### 5. "Đi ngang qua"
+Bật trong Cài đặt → mỗi khi mở app/vào Bản đồ/Địa điểm, nếu có nơi đã lưu trong bán kính đã chọn (300m-2km), sẽ hiện banner nhắc nhở kèm hành động nhanh (Xem bản đồ, Dẫn đường, Yêu thích, Random gần đây, Bỏ qua). Có giới hạn số lần/ngày + nút "Tạm ẩn hôm nay". **Chỉ kiểm tra khi bạn thao tác, không chạy nền** (đúng yêu cầu, cũng là giới hạn thật của mọi PWA trên iPhone).
+
+### 6. Widget "Khám phá quanh bạn"
+Nút "Khám phá" trên Home (đổi tên từ "Gợi ý" cũ) giờ mở ra đầy đủ 5 nhóm: Wishlist gần bạn, Yêu thích gần bạn, Đã lâu chưa ghé, Rating cao gần bạn, và Gợi ý hôm nay (Smart Pick). Chỉ đọc dữ liệu có sẵn, không tạo gì mới.
+
+### 7. Mascot đồng hành
+Icon nhỏ góc trên phải (mọi trang) — thỉnh thoảng bật bong bóng thoại với lời nhắc phù hợp tình huống thật (chưa check-in hôm nay, cuối tuần, wishlist lâu chưa đi, đang ở gần địa điểm đã lưu...). Bấm vào icon để xem gợi ý bất cứ lúc nào. Tắt/chỉnh tần suất (Ít/Vừa/Nhiều) trong Cài đặt.
+
+### Lưu ý khi bạn đưa code lên GitHub lần này
+
+Đây là bản cập nhật **lớn nhất từ trước đến giờ** — rất nhiều thư mục/file mới (`components/mascot/`, `components/passing-by/`, `components/checkin/address-search-input.tsx`, `components/checkin/location-picker-map.tsx`, `lib/geocoding/`, `lib/hooks/use-passing-by.ts`, `lib/hooks/use-mascot-tips.ts`, `lib/hooks/use-nearby-discovery.ts`...). **Bắt buộc làm theo đúng quy trình "thay thế toàn bộ thư mục"** đã hướng dẫn trước đó (đổi tên thư mục cũ → giải nén bản mới → copy `.git` từ thư mục cũ sang) — **không đè từng file lẻ**, để tránh lặp lại lỗi "thiếu file/thư mục mới".
+
+Nếu build lỗi, gửi tôi ảnh chụp Build Logs như mọi lần — tôi sẽ sửa ngay.

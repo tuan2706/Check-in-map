@@ -5,6 +5,7 @@ import type {
   Place,
   PlaceImage,
   PlaceTag,
+  SpinHistoryEntry,
   Tag,
   WishlistImage,
   WishlistPlace,
@@ -28,6 +29,8 @@ class CheckinMapDB extends Dexie {
   // Version 2 — Wishlist
   wishlistPlaces!: Table<WishlistPlace, number>;
   wishlistImages!: Table<WishlistImage, number>;
+  // Version 3 — Random Discovery
+  spinHistory!: Table<SpinHistoryEntry, number>;
 
   constructor() {
     super('CheckinMapDB');
@@ -48,6 +51,12 @@ class CheckinMapDB extends Dexie {
     this.version(2).stores({
       wishlistPlaces: '++id, categoryId, priority, addedAt',
       wishlistImages: '++id, wishlistPlaceId, order',
+    });
+
+    // Version 3: thêm bảng lưu lịch sử "quay số" (Random Discovery) — dùng để
+    // tránh gợi ý lặp lại địa điểm vừa random gần đây, và hiển thị "Tuần này đã đi đâu".
+    this.version(3).stores({
+      spinHistory: '++id, candidateKind, candidateId, spunAt',
     });
   }
 }
