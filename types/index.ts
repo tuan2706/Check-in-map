@@ -97,6 +97,9 @@ export interface AppSettings {
 
   mascotEnabled?: boolean;
   mascotFrequency?: 'low' | 'medium' | 'high';
+
+  /** Kiểu marker trên bản đồ — mặc định 'memory_card' theo Signature Feature */
+  markerStyle?: 'classic' | 'photo' | 'memory_card';
 }
 
 /** Kiểu dữ liệu Place kèm quan hệ đã join sẵn, dùng cho UI */

@@ -9,13 +9,13 @@ import './globals.css';
 // Package "geist" đã tự tối ưu font qua next/font nội bộ, chỉ cần import trực tiếp.
 
 export const metadata: Metadata = {
-  title: 'My Check-in Map',
-  description: 'Bản đồ check-in cá nhân — lưu lại mọi nơi bạn đã đến',
+  title: 'Our Places — Every place has a story.',
+  description: 'Our memories. Our journeys. Our Places. — sổ tay ghi lại mọi hành trình và kỷ niệm của riêng bạn.',
   manifest: '/manifest.webmanifest',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'My Check-in Map',
+    title: 'Our Places',
   },
 };
 

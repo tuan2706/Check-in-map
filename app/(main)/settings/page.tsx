@@ -20,6 +20,11 @@ const MASCOT_FREQUENCY_OPTIONS: { value: 'low' | 'medium' | 'high'; label: strin
   { value: 'medium', label: 'Vừa' },
   { value: 'high', label: 'Nhiều' },
 ];
+const MARKER_STYLE_OPTIONS: { value: 'classic' | 'photo' | 'memory_card'; label: string; description: string }[] = [
+  { value: 'classic', label: 'Classic', description: 'Chấm tròn màu theo rating' },
+  { value: 'photo', label: 'Photo', description: 'Ảnh bìa thu nhỏ' },
+  { value: 'memory_card', label: 'Memory Card', description: 'Thẻ ảnh kỷ niệm (mặc định)' },
+];
 
 const THEME_OPTIONS = [
   { value: 'light' as const, label: 'Sáng', icon: Sun },
@@ -233,6 +238,32 @@ export default function SettingsPage() {
         </div>
       </section>
 
+      {/* Kiểu Marker trên bản đồ */}
+      <section className="space-y-2.5">
+        <h2 className="text-sm font-semibold text-muted-foreground">Marker trên bản đồ</h2>
+        <div className="space-y-2 rounded-2xl border border-border bg-card p-4">
+          {MARKER_STYLE_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() => updateSettings({ markerStyle: opt.value })}
+              className={`flex w-full items-center justify-between rounded-xl border px-3.5 py-2.5 text-left transition-colors ${
+                (settings?.markerStyle ?? 'memory_card') === opt.value
+                  ? 'border-primary bg-primary/10'
+                  : 'border-border hover:bg-accent'
+              }`}
+            >
+              <div>
+                <p className="text-sm font-medium">{opt.label}</p>
+                <p className="text-xs text-muted-foreground">{opt.description}</p>
+              </div>
+              {(settings?.markerStyle ?? 'memory_card') === opt.value && (
+                <Check className="h-4 w-4 shrink-0 text-primary" />
+              )}
+            </button>
+          ))}
+        </div>
+      </section>
+
       {/* Mascot */}
       <section className="space-y-2.5">
         <h2 className="text-sm font-semibold text-muted-foreground">Mascot đồng hành</h2>
@@ -267,9 +298,15 @@ export default function SettingsPage() {
         </div>
       </section>
 
-      <p className="text-center font-mono text-xs text-muted-foreground">
-        My Check-in Map — dữ liệu lưu offline hoàn toàn trên trình duyệt này.
-      </p>
+      <div className="space-y-1 text-center">
+        <p className="text-h4">Our Places</p>
+        <p className="text-caption text-muted-foreground">
+          Our memories. Our journeys. Our Places.
+        </p>
+        <p className="font-mono text-xs text-muted-foreground">
+          Dữ liệu lưu offline hoàn toàn trên trình duyệt này.
+        </p>
+      </div>
     </main>
   );
 }

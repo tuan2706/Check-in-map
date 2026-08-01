@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useLiveQuery } from 'dexie-react-hooks';
 import MapGL, {
   AttributionControl,
   GeolocateControl,
@@ -14,29 +15,44 @@ import MapGL, {
   type MapRef,
 } from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import type { GeoJSONSource } from 'maplibre-gl';
+import type { GeoJSONSource, LngLatBounds } from 'maplibre-gl';
 import { cn } from '@/lib/utils/cn';
+import { db } from '@/lib/db/schema';
 import { MAP_STYLES, type MapStyleKey } from '@/lib/map/map-styles';
 import { MapStyleSwitcher } from '@/components/map/map-style-switcher';
 import { MapVisibilityFilter, type MapVisibility } from '@/components/map/map-visibility-filter';
 import { WishlistMarkerPin } from '@/components/map/wishlist-marker-pin';
+import { MemoryCardMarker } from '@/components/map/memory-card-marker';
 import { PlaceInfoContent } from '@/components/map/place-info-content';
 import { WishlistInfoContent } from '@/components/map/wishlist-info-content';
 import { placesToGeoJSON, type PlaceFeatureProps } from '@/lib/map/places-to-geojson';
+import { getRatingColor } from '@/lib/map/rating-color';
 import { usePlaces } from '@/lib/hooks/use-places';
 import { useWishlist } from '@/lib/hooks/use-wishlist';
 import { useCategories } from '@/lib/hooks/use-categories';
 import { useIsMobile } from '@/lib/hooks/use-is-mobile';
 import { useCurrentLocation } from '@/lib/hooks/use-current-location';
 import { createCircleGeoJSON } from '@/lib/map/circle-geojson';
+import { haversineDistanceKm } from '@/lib/utils/geo';
 import { NEAR_ME_RADIUS_OPTIONS, DEFAULT_NEAR_ME_RADIUS_KM } from '@/lib/hooks/use-filtered-places';
-import type { WishlistPlaceWithMeta } from '@/types';
+import type { PlaceWithRelations, WishlistPlaceWithMeta } from '@/types';
 
 const DEFAULT_VIEW = { longitude: 106.700424, latitude: 10.776889, zoom: 11 }; // TP.HCM mặc định
+// Từ mức zoom này trở lên, GL source vốn đã ngừng cluster (clusterMaxZoom) và render từng
+// điểm riêng lẻ -> đúng thời điểm để thay bằng Memory Card Marker thay vì chấm tròn.
+const CARD_MARKER_MIN_ZOOM = 14;
+// Giới hạn số lượng card render cùng lúc để bảo vệ hiệu năng dù đang trong vùng hiển thị nhỏ
+const MAX_VISIBLE_CARDS = 80;
 
 interface PlaceMapProps {
   onMapClickEmpty?: (lngLat: { lat: number; lng: number }) => void;
   className?: string;
+}
+
+function sizeForZoom(zoom: number, style: 'photo' | 'memory_card'): 'small' | 'medium' | 'full' {
+  if (zoom < 16) return 'small';
+  if (style === 'photo') return 'medium';
+  return zoom >= 17 ? 'full' : 'medium';
 }
 
 export function PlaceMap({ onMapClickEmpty, className }: PlaceMapProps) {
@@ -44,6 +60,7 @@ export function PlaceMap({ onMapClickEmpty, className }: PlaceMapProps) {
   const wishlist = useWishlist();
   const categories = useCategories();
   const isMobile = useIsMobile();
+  const settings = useLiveQuery(() => db.settings.toCollection().first(), []);
   const [styleKey, setStyleKey] = useState<MapStyleKey>('light');
   const [visibility, setVisibility] = useState<MapVisibility>('all');
   const [selected, setSelected] = useState<(PlaceFeatureProps & { lng: number; lat: number }) | null>(
@@ -55,6 +72,10 @@ export function PlaceMap({ onMapClickEmpty, className }: PlaceMapProps) {
   const currentLocation = useCurrentLocation();
   const [nearMeActive, setNearMeActive] = useState(false);
   const [nearMeRadiusKm, setNearMeRadiusKm] = useState(DEFAULT_NEAR_ME_RADIUS_KM);
+  const [viewInfo, setViewInfo] = useState<{ zoom: number; bounds: LngLatBounds | null }>({
+    zoom: DEFAULT_VIEW.zoom,
+    bounds: null,
+  });
 
   const categoryEmojiById = useMemo(() => {
     const map: Record<string, string> = {};
@@ -62,8 +83,17 @@ export function PlaceMap({ onMapClickEmpty, className }: PlaceMapProps) {
     return map;
   }, [categories]);
 
+  const categoryById = useMemo(() => {
+    const map = new Map(categories?.map((c) => [c.id, c]));
+    return map;
+  }, [categories]);
+
   const showVisited = visibility === 'all' || visibility === 'visited';
   const showWishlist = visibility === 'all' || visibility === 'wishlist';
+
+  const markerStyle = settings?.markerStyle ?? 'memory_card';
+  const useCardMarkers = showVisited && markerStyle !== 'classic' && viewInfo.zoom >= CARD_MARKER_MIN_ZOOM;
+  const cardSize = sizeForZoom(viewInfo.zoom, markerStyle === 'photo' ? 'photo' : 'memory_card');
 
   const geojson = useMemo(
     () => placesToGeoJSON(showVisited ? places ?? [] : [], categoryEmojiById, currentLocation),
@@ -79,6 +109,21 @@ export function PlaceMap({ onMapClickEmpty, className }: PlaceMapProps) {
     () => (showWishlist ? (wishlist ?? []).filter((w) => w.lat !== undefined && w.lng !== undefined) : []),
     [wishlist, showWishlist]
   );
+
+  /** Chỉ những địa điểm nằm trong vùng bản đồ đang hiển thị mới render Memory Card —
+   *  đúng yêu cầu "chỉ tải marker trong vùng đang hiển thị" để tối ưu hiệu năng. */
+  const visibleCardPlaces = useMemo(() => {
+    if (!useCardMarkers || !viewInfo.bounds) return [];
+    const bounds = viewInfo.bounds;
+    const filtered = (places ?? []).filter((p) => bounds.contains([p.lng, p.lat]));
+    return filtered.slice(0, MAX_VISIBLE_CARDS);
+  }, [useCardMarkers, viewInfo.bounds, places]);
+
+  const handleMoveEnd = useCallback(() => {
+    const map = mapRef?.getMap();
+    if (!map) return;
+    setViewInfo({ zoom: map.getZoom(), bounds: map.getBounds() });
+  }, [mapRef]);
 
   /** Cập nhật feature-state "selected" trên MapLibre để circle-radius tự animate (V4.3) */
   const setSelectedFeature = useCallback(
@@ -98,6 +143,27 @@ export function PlaceMap({ onMapClickEmpty, className }: PlaceMapProps) {
       }
     },
     [mapRef]
+  );
+
+  const selectPlace = useCallback(
+    (place: PlaceWithRelations) => {
+      setSelectedWishlist(null);
+      setSelected({
+        id: place.id as number,
+        name: place.name,
+        categoryEmoji: categoryEmojiById[place.categoryId] ?? '📍',
+        rating: place.rating,
+        ratingColor: getRatingColor(place.rating),
+        checkinDate: place.checkinDate,
+        distanceKm: currentLocation
+          ? haversineDistanceKm(currentLocation, { lat: place.lat, lng: place.lng })
+          : null,
+        lng: place.lng,
+        lat: place.lat,
+      });
+      setSelectedFeature(place.id as number);
+    },
+    [categoryEmojiById, currentLocation, setSelectedFeature]
   );
 
   const handleClick = useCallback(
@@ -158,8 +224,10 @@ export function PlaceMap({ onMapClickEmpty, className }: PlaceMapProps) {
         initialViewState={DEFAULT_VIEW}
         mapStyle={MAP_STYLES[styleKey] as never}
         style={{ width: '100%', height: '100%' }}
-        interactiveLayerIds={['clusters', 'unclustered-point']}
+        interactiveLayerIds={useCardMarkers ? ['clusters'] : ['clusters', 'unclustered-point']}
         onClick={handleClick}
+        onLoad={handleMoveEnd}
+        onMoveEnd={handleMoveEnd}
         attributionControl={false}
       >
         <NavigationControl position="bottom-right" showCompass visualizePitch />
@@ -173,7 +241,7 @@ export function PlaceMap({ onMapClickEmpty, className }: PlaceMapProps) {
           data={geojson as never}
           cluster
           clusterRadius={50}
-          clusterMaxZoom={14}
+          clusterMaxZoom={CARD_MARKER_MIN_ZOOM}
         >
           <Layer
             id="clusters"
@@ -195,8 +263,8 @@ export function PlaceMap({ onMapClickEmpty, className }: PlaceMapProps) {
             layout={{ 'text-field': '{point_count_abbreviated}', 'text-size': 12 } as never}
             paint={{ 'text-color': '#ffffff' } as never}
           />
-          {/* Marker địa điểm — bán kính "nảy" to hơn khi được chọn (feature-state), có
-              transition mượt thay vì đổi kích thước đột ngột */}
+          {/* Chấm tròn cổ điển — TỰ ẨN khi Memory Card Marker đang đảm nhiệm hiển thị ở
+              cùng mức zoom, tránh vẽ chồng 2 kiểu marker lên nhau */}
           <Layer
             id="unclustered-point"
             type="circle"
@@ -204,26 +272,18 @@ export function PlaceMap({ onMapClickEmpty, className }: PlaceMapProps) {
             paint={
               {
                 'circle-color': ['get', 'ratingColor'],
-                'circle-radius': [
-                  'case',
-                  ['boolean', ['feature-state', 'selected'], false],
-                  13,
-                  9,
-                ],
+                'circle-radius': ['case', ['boolean', ['feature-state', 'selected'], false], 13, 9],
                 'circle-radius-transition': { duration: 250 },
-                'circle-stroke-width': [
-                  'case',
-                  ['boolean', ['feature-state', 'selected'], false],
-                  3,
-                  2,
-                ],
+                'circle-stroke-width': ['case', ['boolean', ['feature-state', 'selected'], false], 3, 2],
                 'circle-stroke-color': '#ffffff',
-                'circle-opacity':
-                  nearMeActive && currentLocation
+                'circle-opacity': useCardMarkers
+                  ? 0
+                  : nearMeActive && currentLocation
                     ? ['case', ['<=', ['get', 'distanceKm'], nearMeRadiusKm], 1, 0.2]
                     : 1,
-                'circle-stroke-opacity':
-                  nearMeActive && currentLocation
+                'circle-stroke-opacity': useCardMarkers
+                  ? 0
+                  : nearMeActive && currentLocation
                     ? ['case', ['<=', ['get', 'distanceKm'], nearMeRadiusKm], 1, 0.2]
                     : 1,
               } as never
@@ -245,6 +305,20 @@ export function PlaceMap({ onMapClickEmpty, className }: PlaceMapProps) {
             />
           </Source>
         )}
+
+        {/* Signature Feature — Memory Card Marker: chỉ render trong vùng đang hiển thị */}
+        {useCardMarkers &&
+          visibleCardPlaces.map((place) => (
+            <Marker key={place.id} longitude={place.lng} latitude={place.lat} anchor="bottom">
+              <MemoryCardMarker
+                place={place}
+                category={categoryById.get(place.categoryId)}
+                size={cardSize}
+                isSelected={selected?.id === place.id}
+                onClick={() => selectPlace(place)}
+              />
+            </Marker>
+          ))}
 
         {/* Wishlist: render dạng DOM Marker (không cluster, số lượng thường nhỏ) */}
         {wishlistWithCoords.map((item) => (

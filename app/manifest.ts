@@ -2,9 +2,9 @@ import type { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'My Check-in Map',
-    short_name: 'CheckinMap',
-    description: 'Bản đồ check-in cá nhân — lưu lại mọi nơi bạn đã đến',
+    name: 'Our Places',
+    short_name: 'Our Places',
+    description: 'Our memories. Our journeys. Our Places. — nơi lưu giữ mọi hành trình và kỷ niệm của riêng bạn.',
     start_url: '/',
     display: 'standalone',
     background_color: '#ffffff',

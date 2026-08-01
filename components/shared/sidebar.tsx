@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils/cn';
 import { NAV_ITEMS } from '@/lib/constants/nav-items';
+import { Logo } from '@/components/shared/logo';
 
 /**
  * Sidebar cố định bên trái — chỉ hiển thị từ breakpoint lg trở lên.
@@ -15,7 +16,7 @@ export function Sidebar() {
   return (
     <aside className="fixed inset-y-0 left-0 z-40 hidden w-60 flex-col border-r border-border bg-card lg:flex">
       <div className="flex h-16 items-center gap-2 px-5">
-        <span className="text-h3 text-primary">My Check-in Map</span>
+        <Logo />
       </div>
 
       <nav className="flex-1 space-y-1 px-3 py-2">
@@ -41,7 +42,7 @@ export function Sidebar() {
       </nav>
 
       <div className="border-t border-border p-4 font-mono text-[11px] text-muted-foreground">
-        Sổ tay du lịch cá nhân — offline & riêng tư
+        Our memories. Our journeys. Our Places.
       </div>
     </aside>
   );

@@ -1,4 +1,4 @@
-# Hướng dẫn sử dụng My Check-in Map
+# Hướng dẫn sử dụng Our Places
 
 Đây là hướng dẫn dùng app sau khi đã chạy thành công (`npm run dev` → mở `localhost:3000`). Nếu bạn chưa chạy được app, xem `README.md` trước.
 

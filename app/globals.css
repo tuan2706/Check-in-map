@@ -190,6 +190,21 @@
   animation: marker-bounce 0.5s ease-out;
 }
 
+/* Memory Card Marker (Signature Feature) — fade in + scale nhẹ khi xuất hiện trên bản đồ */
+@keyframes memory-card-appear {
+  from {
+    opacity: 0;
+    transform: translateY(-50%) scale(0.6);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(-50%) scale(1);
+  }
+}
+.memory-card-marker {
+  animation: memory-card-appear 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
 
 /* MapLibre GL cần chiều cao rõ ràng cho container */
 .maplibregl-map {

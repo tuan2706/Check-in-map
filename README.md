@@ -1,4 +1,4 @@
-# My Check-in Map — Hướng dẫn Phase 2
+# Our Places — Hướng dẫn Phase 2
 
 Đây là bộ khung dự án (project skeleton) đã cấu hình sẵn: Next.js 14, TypeScript strict, TailwindCSS, shadcn/ui, Dexie (IndexedDB), MapLibre GL, PWA (Serwist). Ở phase này app **chưa có giao diện thật** — chỉ có các trang trắng để xác nhận mọi thứ chạy được. Giao diện thật sẽ tới ở Phase 3.
 
@@ -295,3 +295,30 @@ Icon nhỏ góc trên phải (mọi trang) — thỉnh thoảng bật bong bóng
 Đây là bản cập nhật **lớn nhất từ trước đến giờ** — rất nhiều thư mục/file mới (`components/mascot/`, `components/passing-by/`, `components/checkin/address-search-input.tsx`, `components/checkin/location-picker-map.tsx`, `lib/geocoding/`, `lib/hooks/use-passing-by.ts`, `lib/hooks/use-mascot-tips.ts`, `lib/hooks/use-nearby-discovery.ts`...). **Bắt buộc làm theo đúng quy trình "thay thế toàn bộ thư mục"** đã hướng dẫn trước đó (đổi tên thư mục cũ → giải nén bản mới → copy `.git` từ thư mục cũ sang) — **không đè từng file lẻ**, để tránh lặp lại lỗi "thiếu file/thư mục mới".
 
 Nếu build lỗi, gửi tôi ảnh chụp Build Logs như mọi lần — tôi sẽ sửa ngay.
+
+---
+
+## REBRANDING — "Our Places" + Signature Feature: Memory Card Marker
+
+**Không cần `npm install` thêm.**
+
+### Đổi thương hiệu
+Toàn bộ tên app đã đổi từ "My Check-in Map" → **Our Places** — tiêu đề tab trình duyệt, tên PWA khi cài lên điện thoại, Sidebar, Cài đặt, toàn bộ file hướng dẫn. Tagline: **"Every place has a story."** (ngắn gọn) và **"Our memories. Our journeys. Our Places."** (đầy đủ, hiện trong Cài đặt). Logo mới: hình ghim bản đồ lồng 1 trái tim nhỏ bên trong — gợi ý "địa điểm gắn với kỷ niệm" thay vì chỉ là toạ độ. Giữ nguyên bảng màu cam san hô + xanh ngọc hiện tại (đã phù hợp với "tin cậy, thân thiện, du lịch" bạn mong muốn, không cần đổi).
+
+**Lưu ý:** icon PWA (hình vuông trên màn hình chính điện thoại) vẫn là hình ghim đơn giản cũ — nếu muốn icon riêng theo logo mới (có trái tim), báo tôi làm thêm.
+
+### Signature Feature — Memory Card Marker
+Đây là điểm nhận diện đặc trưng mới của app: **marker trên bản đồ giờ là chính ảnh bìa địa điểm**, dạng thẻ kiểu Polaroid, thay vì chấm tròn vô tri.
+
+- **Zoom xa** (< 14): vẫn cluster gộp số lượng như cũ (giữ hiệu năng cho hàng nghìn điểm)
+- **Zoom vừa** (14-16): thẻ ảnh nhỏ, chỉ có ảnh
+- **Zoom gần hơn** (16-17): thêm tên địa điểm bên dưới ảnh
+- **Zoom rất gần** (≥17, chỉ với kiểu "Memory Card"): thêm rating ★ + icon danh mục
+- Chưa có ảnh bìa → hiện khối màu theo danh mục + icon, không bị "trống"
+- Chạm vào: thẻ phồng to nhẹ, viền đổi màu cam, mở bottom sheet/popup như cũ
+- **Chỉ render thẻ trong vùng bản đồ đang hiển thị** (tự động tính lại khi bạn di chuyển bản đồ), giới hạn tối đa 80 thẻ cùng lúc để đảm bảo mượt dù có hàng nghìn địa điểm
+
+**Cài đặt → "Marker trên bản đồ"** cho chọn 3 kiểu: Classic (chấm tròn cũ), Photo (chỉ ảnh), **Memory Card (mặc định, đầy đủ nhất)**.
+
+### Quy trình cập nhật — vẫn làm như V4
+Đổi tên thư mục cũ → giải nén bản mới → copy `.git` sang → `git add . && git commit && git push --force` (nếu gặp lỗi rejected như lần trước, dùng `--force`).

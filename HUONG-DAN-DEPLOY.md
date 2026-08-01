@@ -1,4 +1,4 @@
-# Hướng dẫn đưa My Check-in Map lên Internet & cài thành App
+# Hướng dẫn đưa Our Places lên Internet & cài thành App
 
 Hiện tại app chỉ chạy trên máy bạn (`localhost:3000`) — chỉ bạn mở được, và phải mở Terminal + gõ `npm run dev` mỗi lần. Để biến thành 1 link web thật (ai cũng mở được) và cài như 1 app trên điện thoại, làm theo các bước dưới đây.
 
@@ -37,7 +37,7 @@ Mở Terminal, `cd` vào đúng thư mục dự án (`my-checkin-map`), rồi ch
 ```
 git init
 git add .
-git commit -m "My Check-in Map - phien ban dau tien"
+git commit -m "Our Places - phien ban dau tien"
 git branch -M main
 git remote add origin https://github.com/TEN-TAI-KHOAN-CUA-BAN/my-checkin-map.git
 git push -u origin main
