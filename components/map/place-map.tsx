@@ -18,9 +18,10 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import type { GeoJSONSource, LngLatBounds } from 'maplibre-gl';
 import { cn } from '@/lib/utils/cn';
 import { db } from '@/lib/db/schema';
+import { SlidersHorizontal } from 'lucide-react';
 import { MAP_STYLES, type MapStyleKey } from '@/lib/map/map-styles';
-import { MapStyleSwitcher } from '@/components/map/map-style-switcher';
-import { MapVisibilityFilter, type MapVisibility } from '@/components/map/map-visibility-filter';
+import { MapOptionsSheet } from '@/components/map/map-options-sheet';
+import type { MapVisibility } from '@/components/map/map-visibility-filter';
 import { WishlistMarkerPin } from '@/components/map/wishlist-marker-pin';
 import { MemoryCardMarker } from '@/components/map/memory-card-marker';
 import { PlaceInfoContent } from '@/components/map/place-info-content';
@@ -34,7 +35,7 @@ import { useIsMobile } from '@/lib/hooks/use-is-mobile';
 import { useCurrentLocation } from '@/lib/hooks/use-current-location';
 import { createCircleGeoJSON } from '@/lib/map/circle-geojson';
 import { haversineDistanceKm } from '@/lib/utils/geo';
-import { NEAR_ME_RADIUS_OPTIONS, DEFAULT_NEAR_ME_RADIUS_KM } from '@/lib/hooks/use-filtered-places';
+import { DEFAULT_NEAR_ME_RADIUS_KM } from '@/lib/hooks/use-filtered-places';
 import type { PlaceWithRelations, WishlistPlaceWithMeta } from '@/types';
 
 const DEFAULT_VIEW = { longitude: 106.700424, latitude: 10.776889, zoom: 11 }; // TP.HCM mặc định
@@ -61,8 +62,15 @@ export function PlaceMap({ onMapClickEmpty, className }: PlaceMapProps) {
   const categories = useCategories();
   const isMobile = useIsMobile();
   const settings = useLiveQuery(() => db.settings.toCollection().first(), []);
-  const [styleKey, setStyleKey] = useState<MapStyleKey>('light');
-  const [visibility, setVisibility] = useState<MapVisibility>('all');
+  const [mapOptions, setMapOptions] = useState({
+    styleKey: 'light' as MapStyleKey,
+    visibility: 'all' as MapVisibility,
+    favoriteOnly: false,
+    nearMeActive: false,
+    nearMeRadiusKm: DEFAULT_NEAR_ME_RADIUS_KM,
+  });
+  const [optionsSheetOpen, setOptionsSheetOpen] = useState(false);
+  const { styleKey, visibility, favoriteOnly, nearMeActive, nearMeRadiusKm } = mapOptions;
   const [selected, setSelected] = useState<(PlaceFeatureProps & { lng: number; lat: number }) | null>(
     null
   );
@@ -70,8 +78,6 @@ export function PlaceMap({ onMapClickEmpty, className }: PlaceMapProps) {
   const [mapRef, setMapRef] = useState<MapRef | null>(null);
   const selectedFeatureIdRef = useRef<number | null>(null);
   const currentLocation = useCurrentLocation();
-  const [nearMeActive, setNearMeActive] = useState(false);
-  const [nearMeRadiusKm, setNearMeRadiusKm] = useState(DEFAULT_NEAR_ME_RADIUS_KM);
   const [viewInfo, setViewInfo] = useState<{ zoom: number; bounds: LngLatBounds | null }>({
     zoom: DEFAULT_VIEW.zoom,
     bounds: null,
@@ -91,13 +97,19 @@ export function PlaceMap({ onMapClickEmpty, className }: PlaceMapProps) {
   const showVisited = visibility === 'all' || visibility === 'visited';
   const showWishlist = visibility === 'all' || visibility === 'wishlist';
 
+  const visiblePlaces = useMemo(() => {
+    if (!showVisited) return [];
+    const source = places ?? [];
+    return favoriteOnly ? source.filter((p) => p.isFavorite) : source;
+  }, [places, showVisited, favoriteOnly]);
+
   const markerStyle = settings?.markerStyle ?? 'memory_card';
   const useCardMarkers = showVisited && markerStyle !== 'classic' && viewInfo.zoom >= CARD_MARKER_MIN_ZOOM;
   const cardSize = sizeForZoom(viewInfo.zoom, markerStyle === 'photo' ? 'photo' : 'memory_card');
 
   const geojson = useMemo(
-    () => placesToGeoJSON(showVisited ? places ?? [] : [], categoryEmojiById, currentLocation),
-    [places, categoryEmojiById, showVisited, currentLocation]
+    () => placesToGeoJSON(visiblePlaces, categoryEmojiById, currentLocation),
+    [visiblePlaces, categoryEmojiById, currentLocation]
   );
 
   const circleGeojson = useMemo(() => {
@@ -115,9 +127,9 @@ export function PlaceMap({ onMapClickEmpty, className }: PlaceMapProps) {
   const visibleCardPlaces = useMemo(() => {
     if (!useCardMarkers || !viewInfo.bounds) return [];
     const bounds = viewInfo.bounds;
-    const filtered = (places ?? []).filter((p) => bounds.contains([p.lng, p.lat]));
+    const filtered = visiblePlaces.filter((p) => bounds.contains([p.lng, p.lat]));
     return filtered.slice(0, MAX_VISIBLE_CARDS);
-  }, [useCardMarkers, viewInfo.bounds, places]);
+  }, [useCardMarkers, viewInfo.bounds, visiblePlaces]);
 
   const handleMoveEnd = useCallback(() => {
     const map = mapRef?.getMap();
@@ -386,40 +398,25 @@ export function PlaceMap({ onMapClickEmpty, className }: PlaceMapProps) {
         </div>
       )}
 
-      <div className="absolute right-3 top-3 flex flex-col items-end gap-2 sm:right-4 sm:top-4">
-        <MapStyleSwitcher value={styleKey} onChange={setStyleKey} />
-        <MapVisibilityFilter value={visibility} onChange={setVisibility} />
-        <button
-          type="button"
-          onClick={() => setNearMeActive((v) => !v)}
-          disabled={!currentLocation}
-          className={cn(
-            'rounded-full border px-3 py-1.5 text-xs font-medium shadow-md shadow-black/5 backdrop-blur transition-colors disabled:opacity-50',
-            nearMeActive
-              ? 'border-transparent bg-secondary text-secondary-foreground'
-              : 'border-border bg-card/95 hover:bg-accent'
-          )}
-        >
-          📍 Gần tôi
-        </button>
-        {nearMeActive && (
-          <div className="flex gap-1 rounded-full border border-border bg-card/95 p-1 shadow-md shadow-black/5 backdrop-blur">
-            {NEAR_ME_RADIUS_OPTIONS.map((r) => (
-              <button
-                key={r}
-                type="button"
-                onClick={() => setNearMeRadiusKm(r)}
-                className={cn(
-                  'rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors',
-                  nearMeRadiusKm === r ? 'bg-secondary text-secondary-foreground' : 'text-muted-foreground'
-                )}
-              >
-                {r < 1 ? `${r * 1000}m` : `${r}km`}
-              </button>
-            ))}
-          </div>
+      <button
+        type="button"
+        onClick={() => setOptionsSheetOpen(true)}
+        className="absolute right-3 top-3 z-20 flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card/95 shadow-md shadow-black/5 backdrop-blur transition-transform hover:scale-105 active:scale-95 sm:right-4 sm:top-4"
+        aria-label="Tuỳ chọn bản đồ"
+      >
+        <SlidersHorizontal className="h-4 w-4" />
+        {(favoriteOnly || nearMeActive || visibility !== 'all') && (
+          <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-primary" />
         )}
-      </div>
+      </button>
+
+      <MapOptionsSheet
+        open={optionsSheetOpen}
+        onOpenChange={setOptionsSheetOpen}
+        value={mapOptions}
+        onChange={setMapOptions}
+        hasLocation={!!currentLocation}
+      />
 
       {places && places.length === 0 && wishlist && wishlist.length === 0 && (
         <div className="pointer-events-none absolute inset-x-0 bottom-24 flex justify-center lg:bottom-8">

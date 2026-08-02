@@ -322,3 +322,27 @@ Toàn bộ tên app đã đổi từ "My Check-in Map" → **Our Places** — ti
 
 ### Quy trình cập nhật — vẫn làm như V4
 Đổi tên thư mục cũ → giải nén bản mới → copy `.git` sang → `git add . && git commit && git push --force` (nếu gặp lỗi rejected như lần trước, dùng `--force`).
+
+---
+
+## VERSION 5 — Redesign Home Screen (Progressive Disclosure)
+
+**Không cần `npm install` thêm** — đây là bản chỉ đổi UI/UX, không thêm dữ liệu/tính năng mới.
+
+### Thay đổi chính
+Trang Home giờ **~90% màn hình là bản đồ**. Mọi thứ trước đây hiện sẵn (thanh tìm kiếm, nút "Hôm nay đi đâu?", nút "Khám phá", 3 widget bản đồ luôn nổi) giờ **thu gọn thành icon nhỏ**, chỉ mở ra khi bấm:
+
+- 🔍 **Icon Search** (góc trên trái) — bấm mở thanh tìm kiếm trượt xuống, tự bật bàn phím; bấm X để đóng lại
+- 🧭 **Icon Khám phá** + 🎲 **Icon Random** (cụm dưới trái, gần tầm ngón cái) — mở đúng 2 sheet đã có sẵn, không đổi nội dung bên trong
+- ⚙️ **Icon Tuỳ chọn bản đồ** (góc trên phải, biểu tượng thanh trượt) — gộp cả 4 thứ: kiểu hiển thị (Tất cả/Đã đi/Wishlist), lọc Yêu thích, Gần tôi + bán kính, và kiểu bản đồ (Sáng/Tối/Vệ tinh) vào 1 bottom sheet duy nhất. Có chấm cam nhỏ báo hiệu khi đang bật bộ lọc nào đó.
+- ➕ **Nút (+) giờ là Speed Dial** — bấm vào mới hiện 2 lựa chọn "Check-in" và "Thêm Wishlist" bay lên nhẹ nhàng, thay vì mở thẳng 1 form
+
+Thay đổi này áp dụng cho cả bản đồ ở tab **Bản đồ** luôn (vì dùng chung 1 component với Home) — hưởng lợi kép mà không cần sửa gì thêm.
+
+### Mascot
+Không còn tự động bật bong bóng nhắc nhở nữa — chỉ hiện icon nhỏ góc trên phải, **bấm vào mới thấy lời nhắc**, tự ẩn sau ~8 giây. Cài đặt cũng bớt đi mục "mức độ nhắc" vì không còn ý nghĩa với cách hoạt động mới.
+
+### Điều không đổi
+Toàn bộ tính năng hoạt động y hệt trước — chỉ là cách bấm vào để mở ra có khác. Dữ liệu, các trang Địa điểm/Yêu thích/Dòng thời gian/Cài đặt không bị ảnh hưởng gì.
+
+Bạn thử mở Home, để ý bản đồ giờ chiếm gần hết màn hình, thử bấm từng icon xem có mở đúng nội dung cũ không nhé.

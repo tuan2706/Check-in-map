@@ -15,11 +15,6 @@ import { useCategories } from '@/lib/hooks/use-categories';
 import { usePlaces } from '@/lib/hooks/use-places';
 
 const PASSING_BY_RADIUS_OPTIONS = [300, 500, 1000, 2000];
-const MASCOT_FREQUENCY_OPTIONS: { value: 'low' | 'medium' | 'high'; label: string }[] = [
-  { value: 'low', label: 'Ít' },
-  { value: 'medium', label: 'Vừa' },
-  { value: 'high', label: 'Nhiều' },
-];
 const MARKER_STYLE_OPTIONS: { value: 'classic' | 'photo' | 'memory_card'; label: string; description: string }[] = [
   { value: 'classic', label: 'Classic', description: 'Chấm tròn màu theo rating' },
   { value: 'photo', label: 'Photo', description: 'Ảnh bìa thu nhỏ' },
@@ -267,36 +262,23 @@ export default function SettingsPage() {
       {/* Mascot */}
       <section className="space-y-2.5">
         <h2 className="text-sm font-semibold text-muted-foreground">Mascot đồng hành</h2>
-        <div className="space-y-3 rounded-2xl border border-border bg-card p-4">
+        <div className="space-y-1 rounded-2xl border border-border bg-card p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-sm">
               <Smile className="h-4 w-4 text-muted-foreground" />
-              Hiện mascot nhắc nhở
+              Hiện icon mascot
             </div>
             <Switch
               checked={settings?.mascotEnabled ?? true}
               onCheckedChange={(v) => updateSettings({ mascotEnabled: v })}
             />
           </div>
-          {(settings?.mascotEnabled ?? true) && (
-            <div className="flex gap-2">
-              {MASCOT_FREQUENCY_OPTIONS.map((opt) => (
-                <button
-                  key={opt.value}
-                  onClick={() => updateSettings({ mascotFrequency: opt.value })}
-                  className={`flex-1 rounded-xl border py-2 text-xs font-medium transition-colors ${
-                    (settings?.mascotFrequency ?? 'medium') === opt.value
-                      ? 'border-primary bg-primary/10 text-primary'
-                      : 'border-border bg-background hover:bg-accent'
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-          )}
+          <p className="pl-6 text-xs text-muted-foreground">
+            Mascot chỉ hiện lời nhắc khi bạn chủ động bấm vào icon, không tự động bật lên.
+          </p>
         </div>
       </section>
+
 
       <div className="space-y-1 text-center">
         <p className="text-h4">Our Places</p>
