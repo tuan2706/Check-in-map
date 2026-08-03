@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { haversineDistanceKm } from '@/lib/utils/geo';
+import { fuzzyMatch, normalizeSearchText } from '@/lib/utils/vietnamese';
 import type { CategoryId, PlaceWithRelations } from '@/types';
 
 export interface PlaceFilters {
@@ -54,7 +55,7 @@ export function useFilteredPlaces(
   return useMemo(() => {
     if (!places) return places;
 
-    const q = query.trim().toLowerCase();
+    const q = normalizeSearchText(query);
 
     function distanceOf(p: PlaceWithRelations): number | null {
       if (!currentLocation) return null;
@@ -64,11 +65,11 @@ export function useFilteredPlaces(
     let result = places.filter((p) => {
       if (q) {
         const matches =
-          p.name.toLowerCase().includes(q) ||
-          p.address?.toLowerCase().includes(q) ||
-          p.reviewText?.toLowerCase().includes(q) ||
-          p.recommendedDish?.toLowerCase().includes(q) ||
-          p.tags.some((t) => t.name.toLowerCase().includes(q));
+          fuzzyMatch(p.name, q) ||
+          fuzzyMatch(p.address, q) ||
+          fuzzyMatch(p.reviewText, q) ||
+          fuzzyMatch(p.recommendedDish, q) ||
+          p.tags.some((t) => fuzzyMatch(t.name, q));
         if (!matches) return false;
       }
       if (filters.categoryIds.length > 0 && !filters.categoryIds.includes(p.categoryId)) return false;

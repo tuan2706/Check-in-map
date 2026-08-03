@@ -3,7 +3,6 @@
 import dynamic from 'next/dynamic';
 import { useState } from 'react';
 import { Compass, Dices } from 'lucide-react';
-import { SearchToggle } from '@/components/home/search-toggle';
 import { SpeedDialFab } from '@/components/home/speed-dial-fab';
 import { CheckinSheet } from '@/components/checkin/checkin-sheet';
 import { WishlistSheet } from '@/components/wishlist/wishlist-sheet';
@@ -26,7 +25,6 @@ const PlaceMap = dynamic(() => import('@/components/map/place-map').then((m) => 
  * mọi chức năng phụ (search, gợi ý, random, tạo mới) chỉ là 1 icon nhỏ, mở ra khi cần.
  */
 export default function HomePage() {
-  const [query, setQuery] = useState('');
   const [checkinOpen, setCheckinOpen] = useState(false);
   const [wishlistOpen, setWishlistOpen] = useState(false);
   const [suggestionsOpen, setSuggestionsOpen] = useState(false);
@@ -42,11 +40,6 @@ export default function HomePage() {
   return (
     <main className="relative h-screen w-full overflow-hidden">
       <PlaceMap onMapClickEmpty={openCheckin} />
-
-      {/* Góc trên trái: chỉ 1 icon Search, thu gọn mặc định */}
-      <div className="absolute left-4 top-4 z-20 sm:left-6 sm:top-6">
-        <SearchToggle value={query} onChange={setQuery} />
-      </div>
 
       {passingBy.result && (
         <div className="absolute inset-x-4 top-16 z-20 sm:inset-x-6 sm:top-20">

@@ -346,3 +346,18 @@ Không còn tự động bật bong bóng nhắc nhở nữa — chỉ hiện ic
 Toàn bộ tính năng hoạt động y hệt trước — chỉ là cách bấm vào để mở ra có khác. Dữ liệu, các trang Địa điểm/Yêu thích/Dòng thời gian/Cài đặt không bị ảnh hưởng gì.
 
 Bạn thử mở Home, để ý bản đồ giờ chiếm gần hết màn hình, thử bấm từng icon xem có mở đúng nội dung cũ không nhé.
+
+---
+
+## BUG FIX — Search System (đã sửa sau khi debug và bạn xác nhận)
+
+**Nguyên nhân đã xác định:** Search trên bản đồ/Home chưa từng được nối vào logic tìm kiếm nào — chỉ là ô nhập liệu không làm gì cả (lỗi thiếu tích hợp từ V5, không phải lỗi mới hỏng).
+
+**Đã sửa:**
+1. Nối Search vào bản đồ thật — gõ từ khoá sẽ tìm trong dữ liệu đã lưu (IndexedDB), hiện dropdown gợi ý ngay khi gõ, nhóm theo **📍 Đã ghé** / **⭐ Wishlist**. Bấm 1 kết quả → bản đồ bay tới + mở thông tin, y như bấm marker
+2. Thêm chuẩn hoá tiếng Việt (bỏ dấu) — gõ "Nguyen Hue" giờ tìm ra "Nguyễn Huệ", không phân biệt hoa/thường
+3. Áp dụng luôn cải tiến này cho search ở trang **Địa điểm** (cả tab Đã ghé lẫn Wishlist) để nhất quán toàn hệ thống
+4. Search chỉ hoạt động trong dữ liệu đã lưu (IndexedDB) — không gọi thêm bất kỳ API/dịch vụ online nào, giữ đúng triết lý offline-first
+5. Bonus miễn phí: tab **Bản đồ** trước đây không có ô search nào cả — giờ cũng có luôn (vì dùng chung component với Home)
+
+Không cần `npm install` thêm.

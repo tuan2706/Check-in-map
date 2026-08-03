@@ -26,6 +26,9 @@ import { WishlistMarkerPin } from '@/components/map/wishlist-marker-pin';
 import { MemoryCardMarker } from '@/components/map/memory-card-marker';
 import { PlaceInfoContent } from '@/components/map/place-info-content';
 import { WishlistInfoContent } from '@/components/map/wishlist-info-content';
+import { SearchToggle } from '@/components/home/search-toggle';
+import { MapSearchResultsDropdown } from '@/components/map/map-search-results-dropdown';
+import { searchMapCandidates, type MapSearchResult } from '@/lib/search/search-map';
 import { placesToGeoJSON, type PlaceFeatureProps } from '@/lib/map/places-to-geojson';
 import { getRatingColor } from '@/lib/map/rating-color';
 import { usePlaces } from '@/lib/hooks/use-places';
@@ -70,6 +73,7 @@ export function PlaceMap({ onMapClickEmpty, className }: PlaceMapProps) {
     nearMeRadiusKm: DEFAULT_NEAR_ME_RADIUS_KM,
   });
   const [optionsSheetOpen, setOptionsSheetOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const { styleKey, visibility, favoriteOnly, nearMeActive, nearMeRadiusKm } = mapOptions;
   const [selected, setSelected] = useState<(PlaceFeatureProps & { lng: number; lat: number }) | null>(
     null
@@ -225,6 +229,31 @@ export function PlaceMap({ onMapClickEmpty, className }: PlaceMapProps) {
     setSelected(null);
     setSelectedFeature(null);
   }
+
+  const searchResults = useMemo(
+    () => searchMapCandidates(searchQuery, places ?? [], wishlist ?? []),
+    [searchQuery, places, wishlist]
+  );
+
+  const handleSelectSearchResult = useCallback(
+    (result: MapSearchResult) => {
+      mapRef?.flyTo({ center: [result.lng, result.lat], zoom: 17, duration: 800 });
+
+      if (result.kind === 'place') {
+        const fullPlace = (places ?? []).find((p) => p.id === result.id);
+        if (fullPlace) selectPlace(fullPlace);
+      } else {
+        const fullItem = (wishlist ?? []).find((w) => w.id === result.id);
+        if (fullItem) {
+          setSelected(null);
+          setSelectedFeature(null);
+          setSelectedWishlist(fullItem);
+        }
+      }
+      setSearchQuery('');
+    },
+    [mapRef, places, wishlist, selectPlace, setSelectedFeature]
+  );
 
   // Dọn feature-state khi component unmount, tránh rò rỉ state trên map instance
   useEffect(() => () => setSelectedFeature(null), [setSelectedFeature]);
@@ -397,6 +426,17 @@ export function PlaceMap({ onMapClickEmpty, className }: PlaceMapProps) {
           )}
         </div>
       )}
+
+      <div className="absolute left-3 top-3 z-20 w-[calc(100%-6rem)] max-w-xs sm:left-4 sm:top-4">
+        <SearchToggle value={searchQuery} onChange={setSearchQuery} />
+        <MapSearchResultsDropdown
+          placeResults={searchResults.places}
+          wishlistResults={searchResults.wishlist}
+          categoryEmojiById={categoryEmojiById}
+          onSelect={handleSelectSearchResult}
+          hasQuery={searchQuery.trim().length > 0}
+        />
+      </div>
 
       <button
         type="button"

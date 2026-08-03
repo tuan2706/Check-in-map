@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { haversineDistanceKm } from '@/lib/utils/geo';
+import { fuzzyMatch, normalizeSearchText } from '@/lib/utils/vietnamese';
 import type { CategoryId, WishlistPlaceWithMeta, WishlistPriority } from '@/types';
 
 export type WishlistSortOption = 'added_desc' | 'priority' | 'distance';
@@ -15,15 +16,15 @@ export function useFilteredWishlist(
 ): WishlistPlaceWithMeta[] | undefined {
   return useMemo(() => {
     if (!items) return items;
-    const q = query.trim().toLowerCase();
+    const q = normalizeSearchText(query);
 
     let result = items.filter((item) => {
       if (q) {
         const matches =
-          item.name.toLowerCase().includes(q) ||
-          item.address?.toLowerCase().includes(q) ||
-          item.notes?.toLowerCase().includes(q) ||
-          item.tagNames.some((t) => t.toLowerCase().includes(q));
+          fuzzyMatch(item.name, q) ||
+          fuzzyMatch(item.address, q) ||
+          fuzzyMatch(item.notes, q) ||
+          item.tagNames.some((t) => fuzzyMatch(t, q));
         if (!matches) return false;
       }
       if (categoryIds.length > 0 && !categoryIds.includes(item.categoryId)) return false;
