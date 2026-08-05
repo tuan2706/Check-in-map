@@ -1,6 +1,6 @@
 'use client';
 
-import { ImageOff, MapPin, Trash2 } from 'lucide-react';
+import { ImageOff, MapPin, Pencil, Trash2 } from 'lucide-react';
 import { CategoryBadge } from '@/components/place/category-badge';
 import { PriorityBadge } from '@/components/wishlist/priority-badge';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,7 @@ interface WishlistCardProps {
   category?: Category;
   currentLocation?: { lat: number; lng: number } | null;
   onMarkVisited: () => void;
+  onEdit: () => void;
   onDelete: () => void;
   onClick?: () => void;
 }
@@ -22,6 +23,7 @@ export function WishlistCard({
   category,
   currentLocation,
   onMarkVisited,
+  onEdit,
   onDelete,
   onClick,
 }: WishlistCardProps) {
@@ -75,6 +77,16 @@ export function WishlistCard({
         >
           ✓ Đã trải nghiệm
         </Button>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onEdit();
+          }}
+          className="p-1 text-muted-foreground hover:text-foreground"
+          aria-label="Sửa"
+        >
+          <Pencil className="h-3.5 w-3.5" />
+        </button>
         <button
           onClick={(e) => {
             e.stopPropagation();

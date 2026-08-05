@@ -8,6 +8,9 @@ export const convertFormSchema = z.object({
   actualCost: z.number().min(0).optional(),
   wouldReturn: z.boolean(),
   wouldRecommend: z.boolean(),
+  /** Chỉ có giá trị khi Wishlist gốc chưa có GPS và người dùng vừa bổ sung ở bước này */
+  lat: z.number().optional(),
+  lng: z.number().optional(),
 });
 
 export type ConvertFormValues = z.infer<typeof convertFormSchema>;
@@ -20,4 +23,6 @@ export const CONVERT_FORM_DEFAULTS: ConvertFormValues = {
   actualCost: undefined,
   wouldReturn: true,
   wouldRecommend: true,
+  lat: undefined,
+  lng: undefined,
 };

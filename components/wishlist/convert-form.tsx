@@ -1,15 +1,17 @@
 'use client';
 
 import { useState } from 'react';
+import dynamic from 'next/dynamic';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Controller, useForm } from 'react-hook-form';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Locate } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { StarRatingInput } from '@/components/checkin/star-rating-input';
+import { AddressSearchInput } from '@/components/checkin/address-search-input';
 import { ImageDropzone } from '@/components/gallery/image-dropzone';
 import { PendingPhotoGrid } from '@/components/gallery/pending-photo-grid';
 import {
@@ -18,6 +20,11 @@ import {
   type ConvertFormValues,
 } from '@/lib/validation/convert-schema';
 import type { WishlistPlaceWithMeta } from '@/types';
+
+const LocationPickerMap = dynamic(
+  () => import('@/components/checkin/location-picker-map').then((m) => m.LocationPickerMap),
+  { ssr: false, loading: () => <div className="h-52 w-full animate-pulse rounded-xl bg-muted" /> }
+);
 
 interface ConvertFormProps {
   wishlistItem: WishlistPlaceWithMeta;
@@ -28,15 +35,34 @@ interface ConvertFormProps {
 
 export function ConvertForm({ wishlistItem, onSubmit, onCancel, isSubmitting }: ConvertFormProps) {
   const [newImages, setNewImages] = useState<File[]>([]);
+  const [addressQuery, setAddressQuery] = useState(wishlistItem.address ?? '');
+  const [flyToTick, setFlyToTick] = useState(0);
+  const needsGps = wishlistItem.lat === undefined || wishlistItem.lng === undefined;
+
   const {
     register,
     control,
     handleSubmit,
+    watch,
+    setValue,
     formState: { errors },
   } = useForm<ConvertFormValues>({
     resolver: zodResolver(convertFormSchema),
     defaultValues: { ...CONVERT_FORM_DEFAULTS, actualCost: wishlistItem.estimatedCost },
   });
+
+  const lat = watch('lat');
+  const lng = watch('lng');
+  const hasGps = lat !== undefined && lng !== undefined;
+
+  function useMyLocation() {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition((pos) => {
+      setValue('lat', pos.coords.latitude);
+      setValue('lng', pos.coords.longitude);
+      setFlyToTick((t) => t + 1);
+    });
+  }
 
   return (
     <form onSubmit={handleSubmit((values) => onSubmit(values, newImages))} className="space-y-6">
@@ -44,6 +70,47 @@ export function ConvertForm({ wishlistItem, onSubmit, onCancel, isSubmitting }: 
         Toàn bộ thông tin cũ của <strong className="text-foreground">{wishlistItem.name}</strong> (địa
         chỉ, danh mục, tag, ảnh, ghi chú...) sẽ được giữ nguyên. Bạn chỉ cần bổ sung phần dưới đây.
       </p>
+
+      {/* Chỉ hiện khi Wishlist gốc chưa có GPS — bổ sung 1 lần duy nhất, lưu luôn vào
+          Wishlist để không phải hỏi lại nếu bạn quay lại chỉnh sửa sau này. */}
+      {needsGps && (
+        <div className="space-y-2 rounded-xl border border-primary/30 bg-primary/5 p-3.5">
+          <Label>📍 Địa điểm này chưa có toạ độ GPS — bổ sung để hoàn tất check-in</Label>
+          <AddressSearchInput
+            value={addressQuery}
+            onChangeText={setAddressQuery}
+            onSelectResult={(result) => {
+              setAddressQuery(result.displayName);
+              setValue('lat', result.lat);
+              setValue('lng', result.lng);
+              setFlyToTick((t) => t + 1);
+            }}
+          />
+          <div className="flex items-center justify-between">
+            <span className="font-mono text-xs text-muted-foreground">
+              {hasGps ? `${lat.toFixed(5)}, ${lng.toFixed(5)}` : 'Chưa có toạ độ'}
+            </span>
+            <Button type="button" variant="outline" size="sm" onClick={useMyLocation}>
+              <Locate className="mr-1.5 h-3.5 w-3.5" />
+              Vị trí hiện tại
+            </Button>
+          </div>
+          {hasGps && (
+            <LocationPickerMap
+              lat={lat}
+              lng={lng}
+              flyToTick={flyToTick}
+              onChange={(newLat, newLng) => {
+                setValue('lat', newLat);
+                setValue('lng', newLng);
+              }}
+            />
+          )}
+          {(errors.lat || errors.lng) && !hasGps && (
+            <p className="text-xs text-destructive">Cần bổ sung toạ độ trước khi xác nhận</p>
+          )}
+        </div>
+      )}
 
       <div className="space-y-2">
         <Label>Đánh giá</Label>
@@ -109,7 +176,7 @@ export function ConvertForm({ wishlistItem, onSubmit, onCancel, isSubmitting }: 
         <Button type="button" variant="outline" className="flex-1" onClick={onCancel}>
           Huỷ
         </Button>
-        <Button type="submit" className="flex-1" disabled={isSubmitting}>
+        <Button type="submit" className="flex-1" disabled={isSubmitting || (needsGps && !hasGps)}>
           {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           Xác nhận đã trải nghiệm
         </Button>

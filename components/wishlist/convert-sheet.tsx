@@ -24,7 +24,7 @@ export function ConvertSheet({ item, onOpenChange, onConverted }: ConvertSheetPr
     if (!item?.id) return;
     setIsSubmitting(true);
     try {
-      const newPlaceId = await convertWishlistToCheckin(item.id, {
+      const { placeId: newPlaceId, waitingDays } = await convertWishlistToCheckin(item.id, {
         rating: values.rating,
         reviewText: values.reviewText || undefined,
         checkinDate: values.checkinDate,
@@ -32,13 +32,18 @@ export function ConvertSheet({ item, onOpenChange, onConverted }: ConvertSheetPr
         actualCost: values.actualCost,
         wouldReturn: values.wouldReturn,
         wouldRecommend: values.wouldRecommend,
+        lat: values.lat,
+        lng: values.lng,
       });
 
       if (newImages.length > 0) {
         await addImages(newPlaceId, newImages);
       }
 
-      toast({ title: 'Đã trải nghiệm! 🎉', description: `"${item.name}" đã chuyển sang tab Đã ghé.` });
+      toast({
+        title: 'Đã trải nghiệm! 🎉',
+        description: `"${item.name}" đã chuyển sang tab Đã ghé — hoàn thành sau ${waitingDays} ngày kể từ lúc thêm vào Wishlist.`,
+      });
       onOpenChange(false);
       onConverted();
     } catch (err) {

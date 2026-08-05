@@ -69,6 +69,7 @@ export default function PlacesPage() {
   const [wishlistCategoryIds, setWishlistCategoryIds] = useState<CategoryId[]>([]);
   const [wishlistSort, setWishlistSort] = useState<WishlistSortOption>('added_desc');
   const [convertingItem, setConvertingItem] = useState<WishlistPlaceWithMeta | null>(null);
+  const [editingWishlistItem, setEditingWishlistItem] = useState<WishlistPlaceWithMeta | null>(null);
 
   const places = usePlaces();
   const wishlist = useWishlist();
@@ -288,6 +289,7 @@ export default function PlacesPage() {
                   category={categoryById.get(item.categoryId)}
                   currentLocation={currentLocation}
                   onMarkVisited={() => setConvertingItem(item)}
+                  onEdit={() => setEditingWishlistItem(item)}
                   onDelete={() => item.id && deleteWishlistItem(item.id)}
                 />
               ))}
@@ -306,6 +308,11 @@ export default function PlacesPage() {
 
           <Fab onClick={() => setWishlistSheetOpen(true)} label="Thêm vào Wishlist" />
           <WishlistSheet open={wishlistSheetOpen} onOpenChange={setWishlistSheetOpen} />
+          <WishlistSheet
+            open={!!editingWishlistItem}
+            onOpenChange={(open) => !open && setEditingWishlistItem(null)}
+            editingItem={editingWishlistItem}
+          />
           <ConvertSheet
             item={convertingItem}
             onOpenChange={(open) => !open && setConvertingItem(null)}

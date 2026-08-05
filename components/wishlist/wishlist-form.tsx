@@ -25,12 +25,21 @@ import type { CategoryId, WishlistPriority, WishlistSource } from '@/types';
 
 interface WishlistFormProps {
   initialLatLng?: { lat: number; lng: number };
+  defaultValues?: Partial<WishlistFormValues>;
+  submitLabel?: string;
   onSubmit: (values: WishlistFormValues, pendingImages: File[]) => Promise<void> | void;
   onCancel: () => void;
   isSubmitting?: boolean;
 }
 
-export function WishlistForm({ initialLatLng, onSubmit, onCancel, isSubmitting }: WishlistFormProps) {
+export function WishlistForm({
+  initialLatLng,
+  defaultValues,
+  submitLabel = 'Lưu vào Wishlist',
+  onSubmit,
+  onCancel,
+  isSubmitting,
+}: WishlistFormProps) {
   const categories = useCategories();
   const [pendingImages, setPendingImages] = useState<File[]>([]);
 
@@ -45,8 +54,9 @@ export function WishlistForm({ initialLatLng, onSubmit, onCancel, isSubmitting }
     resolver: zodResolver(wishlistFormSchema),
     defaultValues: {
       ...WISHLIST_FORM_DEFAULTS,
-      lat: initialLatLng?.lat,
-      lng: initialLatLng?.lng,
+      ...defaultValues,
+      lat: defaultValues?.lat ?? initialLatLng?.lat,
+      lng: defaultValues?.lng ?? initialLatLng?.lng,
     },
   });
 
@@ -200,7 +210,7 @@ export function WishlistForm({ initialLatLng, onSubmit, onCancel, isSubmitting }
         </Button>
         <Button type="submit" className="flex-1" disabled={isSubmitting}>
           {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Lưu vào Wishlist
+          {submitLabel}
         </Button>
       </div>
     </form>

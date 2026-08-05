@@ -37,12 +37,23 @@ export interface ConvertToCheckinInput {
   actualCost?: number;
   wouldReturn: boolean;
   wouldRecommend: boolean;
+  /** Chỉ cần truyền khi Wishlist gốc chưa có GPS — sẽ được lưu ngược lại vào Wishlist */
+  lat?: number;
+  lng?: number;
+}
+
+export interface ConvertResult {
+  placeId: number;
+  /** Số ngày từ lúc thêm vào Wishlist tới lúc check-in — phục vụ Timeline/thống kê */
+  waitingDays: number;
 }
 
 /**
  * Chuyển 1 địa điểm Wishlist thành Place (check-in) thật:
  * - Giữ nguyên tên, danh mục, địa chỉ, GPS, link Google Maps, tag, ghi chú đã có
  * - Bổ sung rating/review/ngày check-in/chi phí thực tế (input mới từ form rút gọn)
+ * - Nếu Wishlist gốc CHƯA có GPS, dùng toạ độ vừa nhập ở bước này (đã lưu ngược lại
+ *   vào Wishlist trước, không chặn cứng như trước đây)
  * - Copy toàn bộ ảnh đã có trong Wishlist sang địa điểm mới (không bắt chụp lại)
  * - Đánh dấu wishlist item là "đã chuyển đổi" (ẩn khỏi tab Muốn đi) thay vì xoá,
  *   để vẫn giữ được lịch sử "nơi này từng nằm trong wishlist bao lâu".
@@ -50,19 +61,27 @@ export interface ConvertToCheckinInput {
 export async function convertWishlistToCheckin(
   wishlistId: number,
   extra: ConvertToCheckinInput
-): Promise<number> {
+): Promise<ConvertResult> {
   const wishlistItem = await db.wishlistPlaces.get(wishlistId);
   if (!wishlistItem) throw new Error('Không tìm thấy mục Wishlist này');
+
+  const finalLat = wishlistItem.lat ?? extra.lat;
+  const finalLng = wishlistItem.lng ?? extra.lng;
+  if (finalLat === undefined || finalLng === undefined) {
+    throw new Error('Cần có toạ độ GPS để hoàn tất check-in — vui lòng bổ sung vị trí');
+  }
+
+  // Nếu Wishlist gốc chưa có GPS, lưu ngược lại luôn để không phải hỏi lại lần sau
   if (wishlistItem.lat === undefined || wishlistItem.lng === undefined) {
-    throw new Error('Địa điểm này chưa có toạ độ GPS, hãy bổ sung trước khi check-in');
+    await db.wishlistPlaces.update(wishlistId, { lat: finalLat, lng: finalLng });
   }
 
   const newPlaceInput: NewPlaceInput = {
     name: wishlistItem.name,
     categoryId: wishlistItem.categoryId,
     address: wishlistItem.address,
-    lat: wishlistItem.lat,
-    lng: wishlistItem.lng,
+    lat: finalLat,
+    lng: finalLng,
     checkinDate: extra.checkinDate,
     checkinTime: extra.checkinTime,
     rating: extra.rating,
@@ -111,5 +130,8 @@ export async function convertWishlistToCheckin(
     updatedAt: Date.now(),
   });
 
-  return newPlaceId;
+  const checkinTimestamp = new Date(extra.checkinDate).getTime() || Date.now();
+  const waitingDays = Math.max(0, Math.round((checkinTimestamp - wishlistItem.addedAt) / (1000 * 60 * 60 * 24)));
+
+  return { placeId: newPlaceId, waitingDays };
 }

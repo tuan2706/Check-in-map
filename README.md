@@ -361,3 +361,17 @@ Bạn thử mở Home, để ý bản đồ giờ chiếm gần hết màn hình
 5. Bonus miễn phí: tab **Bản đồ** trước đây không có ô search nào cả — giờ cũng có luôn (vì dùng chung component với Home)
 
 Không cần `npm install` thêm.
+
+---
+
+## BUG FIX — Wishlist ↔ Đã ghé Data Flow (Hướng A, sau khi debug)
+
+**Không cần `npm install` thêm.**
+
+**Đã sửa 2 lỗi thật:**
+1. Bấm "Đã trải nghiệm" trên 1 Wishlist chưa có GPS **không còn bị chặn cứng nữa** — form hiện thêm bước tìm địa chỉ/dùng vị trí hiện tại/kéo marg trên bản đồ nhỏ ngay tại đó, xác nhận xong mới cho lưu. GPS được lưu ngược lại vào Wishlist luôn.
+2. Thêm nút ✏️ **Sửa** trên mỗi card Wishlist — hoá ra phần logic (form, sheet) đã có sẵn từ trước, chỉ thiếu nút bấm nối vào, nên sửa nhanh hơn dự kiến.
+
+**Thêm nhỏ:** thông báo sau khi chuyển đổi giờ có "hoàn thành sau X ngày" (tính từ lúc thêm vào Wishlist).
+
+**Không đổi:** kiến trúc 2 bảng riêng (Wishlist/Place) vẫn giữ nguyên như đã thống nhất — không đại tu.
